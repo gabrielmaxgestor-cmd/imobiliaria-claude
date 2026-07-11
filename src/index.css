@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --cor-fundo: #F6F1E6;
+  --cor-fundo-alt: #EFE7D8;
+  --cor-escura: #1E2B20;
+  --cor-escura-2: #16201A;
+  --cor-acento: #BD5B34;
+  --cor-acento-escuro: #9A4726;
+  --cor-dourado: #A9843F;
+  --cor-texto: #241F18;
+  --cor-texto-suave: #5B5648;
+  --cor-branco: #FFFCF6;
+}
+
+@theme {
+  --color-fundo: var(--cor-fundo);
+  --color-fundo-alt: var(--cor-fundo-alt);
+  --color-escura: var(--cor-escura);
+  --color-escura-2: var(--cor-escura-2);
+  --color-acento: var(--cor-acento);
+  --color-acento-escuro: var(--cor-acento-escuro);
+  --color-dourado: var(--cor-dourado);
+  --color-texto: var(--cor-texto);
+  --color-texto-suave: var(--cor-texto-suave);
+  --color-branco: var(--cor-branco);
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Manrope", "Work Sans", sans-serif;
+}
+
+/* Base custom styles for smooth, sophisticated scrolling and visual rhythm */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: "Manrope", sans-serif;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Standard animation utility classes */
+.fade-in-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-in-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes scrollLine {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+.animate-scroll-line {
+  animation: scrollLine 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
