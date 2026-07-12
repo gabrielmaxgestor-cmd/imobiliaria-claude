@@ -503,3 +503,7 @@ export const CONFIG: ImobiliariaConfig = {
     areaLabel: "m²"
   }
 };
+
+export const URL_WEBHOOK_LEADS = "URL_WEBHOOK_APPS_SCRIPT";
+export const URL_WEBHOOK_NEWSLETTER = "URL_WEBHOOK_NEWSLETTER_APPS_SCRIPT";
+

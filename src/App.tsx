@@ -4,18 +4,37 @@ import {
   Menu, 
   X, 
   ArrowUpRight, 
-  Compass, 
-  Info, 
-  Sparkles, 
   MapPin, 
-  ChevronRight, 
   Heart,
   Phone,
   Bed,
   Bath,
-  Maximize
+  Maximize,
+  Share2
 } from "lucide-react";
-import { CONFIG } from "./config";
+import { CONFIG, URL_WEBHOOK_LEADS, URL_WEBHOOK_NEWSLETTER } from "./config";
+import { rastrearEvento } from "./tracking";
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+};
 
 export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,6 +48,64 @@ export default function App() {
   const [filterPreco, setFilterPreco] = useState("all");
   const [currentDepoimento, setCurrentDepoimento] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  
+  const [nomeForm, setNomeForm] = useState("");
+  const [whatsappForm, setWhatsappForm] = useState("");
+  const [procuraForm, setProcuraForm] = useState("");
+  const [enviandoForm, setEnviandoForm] = useState(false);
+
+  const [showModalForm, setShowModalForm] = useState(false);
+  const [nomeModalForm, setNomeModalForm] = useState("");
+  const [whatsappModalForm, setWhatsappModalForm] = useState("");
+  const [enviandoModalForm, setEnviandoModalForm] = useState(false);
+  const [modalFormSubmitted, setModalFormSubmitted] = useState(false);
+
+  const [emailNewsletter, setEmailNewsletter] = useState("");
+  const [enviandoNewsletter, setEnviandoNewsletter] = useState(false);
+  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+
+  const [compartilhadoFeedback, setCompartilhadoFeedback] = useState("");
+
+  const handleCompartilhar = async (imovel: any) => {
+    if (!imovel) return;
+    const urlCompartilhar = window.location.href;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: imovel.titulo,
+          text: `Confira este imóvel exclusivo: ${imovel.titulo}`,
+          url: urlCompartilhar,
+        });
+        rastrearEvento("compartilhar_imovel", { imovel: imovel.titulo, metodo: "native" });
+      } catch (error) {
+        console.log("Compartilhamento nativo cancelado ou falhou:", error);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(urlCompartilhar);
+        setCompartilhadoFeedback("Link copiado para a área de transferência!");
+        rastrearEvento("compartilhar_imovel", { imovel: imovel.titulo, metodo: "clipboard" });
+        setTimeout(() => setCompartilhadoFeedback(""), 3000);
+      } catch (err) {
+        console.error("Erro ao copiar link:", err);
+      }
+    }
+  };
+
+  // Reset modal form states when the selected property changes
+  useEffect(() => {
+    setShowModalForm(false);
+    setNomeModalForm("");
+    setWhatsappModalForm("");
+    setEnviandoModalForm(false);
+    setModalFormSubmitted(false);
+
+    if (selectedImovel) {
+      rastrearEvento("visualizar_imovel", { titulo: selectedImovel.titulo });
+    }
+  }, [selectedImovel]);
+
 
   // Temporizador para a frase de abertura poética do Hero
   useEffect(() => {
@@ -76,12 +153,111 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentDepoimento]);
 
-  const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = (origem: any = "header") => {
+    const originStr = typeof origem === "string" ? origem : "header";
     const message = encodeURIComponent(
       `Olá! Gostaria de agendar um atendimento exclusivo com a curadoria da ${CONFIG.infoGerais.nome}.`
     );
+    rastrearEvento("clique_whatsapp", { origem: originStr });
     window.open(`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${message}`, "_blank");
   };
+
+  const handleSubmitForm = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (enviandoForm) return;
+
+    setEnviandoForm(true);
+
+    try {
+      await fetch(URL_WEBHOOK_LEADS, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          nome: nomeForm,
+          whatsapp: whatsappForm,
+          procura: procuraForm,
+          imovel: "Formulário geral do site"
+        })
+      });
+      // Rastrear evento de conversão
+      rastrearEvento("lead_formulario");
+      // Limpar campos após o envio
+      setNomeForm("");
+      setWhatsappForm("");
+      setProcuraForm("");
+    } catch (error) {
+      console.error("Erro ao enviar dados do formulário:", error);
+    } finally {
+      setEnviandoForm(false);
+      setFormSubmitted(true);
+    }
+  };
+
+  const handleSubmitModalForm = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (enviandoModalForm || !selectedImovel) return;
+
+    setEnviandoModalForm(true);
+
+    try {
+      await fetch(URL_WEBHOOK_LEADS, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          nome: nomeModalForm,
+          whatsapp: whatsappModalForm,
+          procura: "Interesse no imóvel",
+          imovel: selectedImovel.titulo
+        })
+      });
+      // Rastrear evento de conversão
+      rastrearEvento("lead_modal_imovel", { imovel: selectedImovel.titulo });
+      // Limpar campos após o envio
+      setNomeModalForm("");
+      setWhatsappModalForm("");
+    } catch (error) {
+      console.error("Erro ao enviar dados do formulário do modal:", error);
+    } finally {
+      setEnviandoModalForm(false);
+      setModalFormSubmitted(true);
+    }
+  };
+
+  const handleSubmitNewsletter = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (enviandoNewsletter) return;
+
+    setEnviandoNewsletter(true);
+
+    try {
+      await fetch(URL_WEBHOOK_NEWSLETTER, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          email: emailNewsletter
+        })
+      });
+      // Rastrear evento de conversão
+      rastrearEvento("newsletter_inscricao", { email: emailNewsletter });
+      // Limpar campos após o envio
+      setEmailNewsletter("");
+    } catch (error) {
+      console.error("Erro ao enviar cadastro de newsletter:", error);
+    } finally {
+      setEnviandoNewsletter(false);
+      setNewsletterSubmitted(true);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-fundo text-texto flex flex-col selection:bg-acento/20 selection:text-acento-escuro">
@@ -727,16 +903,19 @@ export default function App() {
             }
 
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filtered.map((im, index) => {
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              >
+                {filtered.map((im) => {
                   return (
                     <motion.div
                       key={im.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-50px" }}
-                      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                      className="group bg-branco border border-texto/5 overflow-hidden flex flex-col justify-between hover:shadow-xl transition-all duration-500"
+                      variants={cardVariants}
+                      className="group bg-branco border border-texto/5 overflow-hidden flex flex-col justify-between hover:scale-105 hover:shadow-xl transition-all duration-500"
                     >
                       {/* Image Container with overlays */}
                       <div className="relative aspect-[4/3] overflow-hidden bg-escura">
@@ -835,7 +1014,7 @@ export default function App() {
                     </motion.div>
                   );
                 })}
-              </div>
+              </motion.div>
             );
           })()}
 
@@ -1047,6 +1226,7 @@ export default function App() {
               href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(CONFIG.infoGerais.mensagemWhatsappPadrao)}`}
               target="_blank"
               rel="noreferrer"
+              onClick={() => rastrearEvento("clique_whatsapp", { origem: "cta_final" })}
               className="group inline-flex items-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-xl hover:shadow-2xl cursor-pointer"
             >
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -1069,10 +1249,7 @@ export default function App() {
           {/* Mini-Formulário Alternativo */}
           <div className="w-full max-w-lg mx-auto">
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setFormSubmitted(true);
-              }}
+              onSubmit={handleSubmitForm}
               className="bg-branco/5 backdrop-blur-sm border border-branco/10 p-6 md:p-8 space-y-4 text-left relative overflow-hidden"
             >
               {formSubmitted ? (
@@ -1100,8 +1277,11 @@ export default function App() {
                       <input
                         type="text"
                         required
+                        value={nomeForm}
+                        onChange={(e) => setNomeForm(e.target.value)}
+                        disabled={enviandoForm}
                         placeholder={CONFIG.ctaFinal.formulario.nomePlaceholder}
-                        className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30"
+                        className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 disabled:opacity-50"
                       />
                     </div>
 
@@ -1112,8 +1292,11 @@ export default function App() {
                       <input
                         type="tel"
                         required
+                        value={whatsappForm}
+                        onChange={(e) => setWhatsappForm(e.target.value)}
+                        disabled={enviandoForm}
                         placeholder={CONFIG.ctaFinal.formulario.whatsappPlaceholder}
-                        className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30"
+                        className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -1125,16 +1308,20 @@ export default function App() {
                     <textarea
                       rows={3}
                       required
+                      value={procuraForm}
+                      onChange={(e) => setProcuraForm(e.target.value)}
+                      disabled={enviandoForm}
                       placeholder={CONFIG.ctaFinal.formulario.procuraPlaceholder}
-                      className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 resize-none"
+                      className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 resize-none disabled:opacity-50"
                     ></textarea>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-4 bg-branco text-escura hover:bg-dourado hover:text-branco text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans"
+                    disabled={enviandoForm}
+                    className="w-full py-4 bg-branco text-escura hover:bg-dourado hover:text-branco text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {CONFIG.ctaFinal.formulario.botaoEnviar}
+                    {enviandoForm ? "Enviando..." : CONFIG.ctaFinal.formulario.botaoEnviar}
                   </button>
                 </>
               )}
@@ -1145,7 +1332,7 @@ export default function App() {
       </section>
 
       {/* 10. RODAPÉ COMPLETO */}
-      <footer className="w-full bg-escura-2 text-branco/80 pt-16 pb-8 px-6 md:px-12 border-t border-branco/5">
+      <footer className="w-full bg-escura-2 text-branco/80 pt-16 pb-24 md:pb-8 px-6 md:px-12 border-t border-branco/5">
         <div className="container mx-auto max-w-7xl">
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 mb-12">
@@ -1164,6 +1351,41 @@ export default function App() {
               <p className="font-sans text-xs text-branco/60 leading-relaxed font-light max-w-sm">
                 {CONFIG.rodapeDescricao}
               </p>
+
+              {/* Formulário de Newsletter */}
+              <form onSubmit={handleSubmitNewsletter} className="space-y-3 max-w-sm pt-2">
+                <span className="text-[9px] uppercase tracking-widest text-branco/50 font-bold font-sans block">
+                  Inscreva-se na nossa Newsletter
+                </span>
+                {newsletterSubmitted ? (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-dourado font-serif"
+                  >
+                    E-mail cadastrado com sucesso!
+                  </motion.p>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="email"
+                      required
+                      value={emailNewsletter}
+                      onChange={(e) => setEmailNewsletter(e.target.value)}
+                      disabled={enviandoNewsletter}
+                      placeholder="Seu melhor e-mail"
+                      className="flex-grow bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={enviandoNewsletter}
+                      className="px-5 py-3 bg-branco text-escura hover:bg-dourado hover:text-branco text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                      {enviandoNewsletter ? "..." : "Assinar"}
+                    </button>
+                  </div>
+                )}
+              </form>
 
               {/* Redes Sociais */}
               <div className="flex items-center gap-4 pt-2">
@@ -1300,193 +1522,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* ÁREA PRINCIPAL COM PREVIEW INSTRUCIONAL / BOAS-VINDAS */}
-      {false && (<>
-      <main className="flex-grow pt-24 pb-20 px-6 md:px-12 max-w-5xl mx-auto w-full flex flex-col justify-center">
-        
-        {/* CABEÇALHO DO ESTÚDIO DE CRIAÇÃO (DIRETRIZES EDITORIAIS) */}
-        <div id="curadoria" className="text-left mt-6 mb-12 scroll-mt-24">
-          {/* Linha Divisora (do tema de design) */}
-          <div className="w-[60px] h-[1px] bg-dourado mb-6"></div>
-          
-          {/* Label Elegante (do tema de design) */}
-          <span className="text-[11px] uppercase tracking-[0.3em] text-acento font-bold mb-6 block">
-            Curadoria Imobiliária Exclusiva
-          </span>
-          
-          <h1 className="font-serif text-4xl md:text-7xl font-light text-escura leading-[1.1] tracking-tight mb-8">
-            Onde a vida <span className="font-medium italic text-acento">ganha poesia</span>.
-          </h1>
-          
-          <p className="font-sans text-lg md:text-xl text-texto-suave max-w-3xl leading-relaxed font-light">
-            Sua história merece um cenário à altura. Desenvolvemos o projeto editorial da <strong className="font-medium text-escura">{CONFIG.infoGerais.nome}</strong> baseado no <strong>Círculo Dourado</strong> de Simon Sinek. Todo o conteúdo é alimentado dinamicamente pelo objeto <code className="bg-fundo-alt px-1.5 py-0.5 rounded font-mono text-sm text-acento font-semibold">CONFIG</code>.
-          </p>
-        </div>
-
-        {/* PAINEL DE CONTROLE / INFORMAÇÕES DO ATUAL CONFIG */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16">
-          
-          {/* Card 1: Identidade e Customização */}
-          <div className="bg-fundo-alt/60 border border-texto/5 p-8 relative overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-acento/5 rounded-full -mr-8 -mt-8"></div>
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-escura/5 text-escura rounded-none mt-1">
-                <Compass className="w-5 h-5" />
-              </div>
-              <div className="space-y-3">
-                <h3 className="font-serif text-xl font-medium text-escura">Identidade Ativa</h3>
-                <p className="text-sm text-texto-suave leading-relaxed">
-                  As informações do header e a paleta de cores foram extraídas diretamente do <code className="text-xs bg-fundo/80 p-1 font-mono">CONFIG</code>. 
-                  Experimente mudar as variáveis de cores para ver o site se transformar instantaneamente!
-                </p>
-                <div className="pt-3 space-y-1.5">
-                  <div className="text-xs font-mono text-texto-suave flex justify-between border-b border-texto/10 pb-1">
-                    <span>Nome da Imobiliária:</span>
-                    <span className="font-bold text-escura">{CONFIG.infoGerais.nome}</span>
-                  </div>
-                  <div className="text-xs font-mono text-texto-suave flex justify-between border-b border-texto/10 pb-1">
-                    <span>WhatsApp Cadastrado:</span>
-                    <span className="font-bold text-escura">{CONFIG.infoGerais.whatsappFormatado}</span>
-                  </div>
-                  <div className="text-xs font-mono text-texto-suave flex justify-between">
-                    <span>Email Comercial:</span>
-                    <span className="font-bold text-escura">{CONFIG.infoGerais.email}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Visualizador da Paleta de Cores Ativa */}
-          <div className="bg-fundo-alt/60 border border-texto/5 p-8 relative overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-acento/5 text-acento rounded-none mt-1">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div className="space-y-3 w-full">
-                <h3 className="font-serif text-xl font-medium text-escura">Paleta de Cores Dinâmica</h3>
-                <p className="text-sm text-texto-suave leading-relaxed">
-                  Cores aplicadas dinamicamente via variáveis CSS injetadas no elemento <code className="text-xs bg-fundo/80 p-1 font-mono">html</code>.
-                </p>
-                
-                {/* Grade de Amostras de Cores */}
-                <div className="grid grid-cols-5 gap-2 pt-2">
-                  <div className="flex flex-col items-center">
-                    <div className="w-full aspect-square border border-texto/10" style={{ backgroundColor: CONFIG.cores.corFundo }}></div>
-                    <span className="text-[9px] font-mono mt-1 text-texto-suave">Fundo</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="w-full aspect-square border border-texto/10" style={{ backgroundColor: CONFIG.cores.corEscura }}></div>
-                    <span className="text-[9px] font-mono mt-1 text-texto-suave">Escura</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="w-full aspect-square border border-texto/10" style={{ backgroundColor: CONFIG.cores.corAcento }}></div>
-                    <span className="text-[9px] font-mono mt-1 text-texto-suave">Acento</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="w-full aspect-square border border-texto/10" style={{ backgroundColor: CONFIG.cores.corDourado }}></div>
-                    <span className="text-[9px] font-mono mt-1 text-texto-suave">Dourado</span>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="w-full aspect-square border border-texto/10" style={{ backgroundColor: CONFIG.cores.corBranco }}></div>
-                    <span className="text-[9px] font-mono mt-1 text-texto-suave">Branco</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* MAPA DAS PRÓXIMAS ETAPAS (CRONOGRAMA DO PROJETO) */}
-        <div id="cronograma" className="mt-16 space-y-6 scroll-mt-24">
-          <h3 className="font-serif text-2xl font-light text-escura text-center md:text-left">
-            Mapa de Expansão (O Círculo Dourado)
-          </h3>
-          
-          <div className="relative border-l border-texto/10 pl-6 ml-4 space-y-8">
-            
-            {/* Seção 1: Header (Pronta) */}
-            <div className="relative">
-              <div className="absolute -left-[31px] top-1.5 w-4 h-4 bg-acento border-2 border-fundo rounded-full"></div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono uppercase bg-acento/10 text-acento-escuro px-2 py-0.5 font-bold">Ativa</span>
-                  <h4 className="font-serif text-lg font-medium text-escura">1. Header Fixo & Identidade Visual</h4>
-                </div>
-                <p className="text-sm text-texto-suave leading-relaxed">
-                  Estrutura base com logo, menu adaptativo e comportamento de fade/blur ao rolar a página. Experimente fazer scroll!
-                </p>
-              </div>
-            </div>
-
-            {/* Seções 2 a 4: O Porquê */}
-            <div className="relative">
-              <div className="absolute -left-[31px] top-1.5 w-4 h-4 bg-texto-suave/30 border-2 border-fundo rounded-full"></div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono uppercase bg-texto-suave/10 text-texto-suave px-2 py-0.5">A Seguir</span>
-                  <h4 className="font-serif text-lg font-medium text-escura">2. O PORQUÊ (Hero Emocional & Manifesto)</h4>
-                </div>
-                <p className="text-sm text-texto-suave leading-relaxed">
-                  Introdução com vídeo imersivo ou imagem dramática e o Manifesto de Crença, construindo a conexão humana antes do produto.
-                </p>
-              </div>
-            </div>
-
-            {/* Seções 5 a 6: O Como */}
-            <div className="relative">
-              <div className="absolute -left-[31px] top-1.5 w-4 h-4 bg-texto-suave/30 border-2 border-fundo rounded-full"></div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono uppercase bg-texto-suave/10 text-texto-suave px-2 py-0.5">Planejado</span>
-                  <h4 className="font-serif text-lg font-medium text-escura">3. O COMO (Diferenciais & Imóvel Secreto)</h4>
-                </div>
-                <p className="text-sm text-texto-suave leading-relaxed">
-                  Diferenciais exclusivos de curadoria e a apresentação conceitual de uma joia arquitetônica em destaque.
-                </p>
-              </div>
-            </div>
-
-            {/* Seções 7 a 10: O Quê */}
-            <div className="relative">
-              <div className="absolute -left-[31px] top-1.5 w-4 h-4 bg-texto-suave/30 border-2 border-fundo rounded-full"></div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono uppercase bg-texto-suave/10 text-texto-suave px-2 py-0.5">Planejado</span>
-                  <h4 className="font-serif text-lg font-medium text-escura">4. O QUÊ (Grid Filtrável, Depoimentos & Rodapé)</h4>
-                </div>
-                <p className="text-sm text-texto-suave leading-relaxed">
-                  Catálogo completo de imóveis elegantes com filtros de categoria, depoimentos reais e chamada para ação integrada.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* BOTÃO PARA TESTAR SCROLL */}
-        <div className="flex justify-center mt-12">
-          <a
-            href="#cronograma"
-            onClick={(e) => {
-              e.preventDefault();
-              window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-            }}
-            className="text-xs uppercase font-semibold text-acento hover:text-acento-escuro tracking-widest flex items-center gap-1 transition-colors duration-300"
-          >
-            Ver Detalhes do Escopo <ChevronRight className="w-4 h-4 rotate-90" />
-          </a>
-        </div>
-
-      </main>
-
-      {/* SUPORTE DO WORKSPACE */}
-      <footer className="border-t border-texto/5 py-6 bg-fundo-alt/20 text-center text-[10px] text-texto-suave font-sans uppercase tracking-wider">
-        Espaço de Criação e Diretrizes Editoriais — Aura Imóveis d'Alma
-      </footer>
-      </>)}
-
       {/* DETALHES DO IMÓVEL (MODAL EXCLUSIVO COM GALERIA) */}
       <AnimatePresence>
         {selectedImovel && (
@@ -1615,23 +1650,137 @@ export default function App() {
                   </div>
 
                   {/* Actions & Price */}
-                  <div className="border-t border-texto/5 pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-sans uppercase tracking-widest text-texto-suave">{CONFIG.detalhesModal.precoLabel}</span>
-                      <span className="font-serif text-2xl text-acento font-semibold lowercase tracking-wide">{selectedImovel.preco}</span>
+                  <div className="border-t border-texto/5 pt-6 flex flex-col gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-sans uppercase tracking-widest text-texto-suave">{CONFIG.detalhesModal.precoLabel}</span>
+                        <span className="font-serif text-2xl text-acento font-semibold lowercase tracking-wide">{selectedImovel.preco}</span>
+                      </div>
+
+                      <div className="flex flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                          <a
+                            href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(
+                              `Olá! Gostaria de receber mais informações e agendar um atendimento exclusivo para o imóvel: "${selectedImovel.titulo}" localizado em ${selectedImovel.local || selectedImovel.localizacao}.`
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={() => rastrearEvento("clique_whatsapp", { origem: "modal_imovel" })}
+                            className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>{CONFIG.detalhesModal.botaoWhatsapp}</span>
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCompartilhar(selectedImovel)}
+                            className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer"
+                          >
+                            <Share2 className="w-3.5 h-3.5 text-acento" />
+                            <span>Compartilhar</span>
+                          </button>
+                        </div>
+
+                        {compartilhadoFeedback && (
+                          <span className="text-[11px] text-acento font-sans animate-pulse">{compartilhadoFeedback}</span>
+                        )}
+
+                        {!showModalForm && !modalFormSubmitted && (
+                          <button
+                            type="button"
+                            onClick={() => setShowModalForm(true)}
+                            className="text-xs text-texto-suave hover:text-acento font-sans tracking-wide underline cursor-pointer transition-colors duration-200 bg-transparent border-0 outline-none"
+                          >
+                            Prefiro receber informações por aqui
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    <a
-                      href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(
-                        `Olá! Gostaria de receber mais informações e agendar um atendimento exclusivo para o imóvel: "${selectedImovel.titulo}" localizado em ${selectedImovel.local || selectedImovel.localizacao}.`
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group inline-flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                      <span>{CONFIG.detalhesModal.botaoWhatsapp}</span>
-                    </a>
+                    {/* Mini-Formulário Inline ou Mensagem de Sucesso */}
+                    <AnimatePresence>
+                      {(showModalForm || modalFormSubmitted) && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden border-t border-texto/5 pt-4 w-full"
+                        >
+                          {modalFormSubmitted ? (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="py-4 text-center bg-acento/5 border border-acento/10 px-4 space-y-2"
+                            >
+                              <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-acento/10 text-acento mb-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <p className="font-serif text-sm text-escura">
+                                {CONFIG.ctaFinal.formulario.mensagemSucesso}
+                              </p>
+                            </motion.div>
+                          ) : (
+                            <form onSubmit={handleSubmitModalForm} className="space-y-4">
+                              <p className="font-serif italic text-xs text-texto-suave text-center sm:text-left">
+                                Preencha abaixo e entraremos em contato com você:
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] uppercase tracking-widest text-texto-suave font-bold font-sans">
+                                    {CONFIG.ctaFinal.formulario.nomeLabel}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={nomeModalForm}
+                                    onChange={(e) => setNomeModalForm(e.target.value)}
+                                    disabled={enviandoModalForm}
+                                    placeholder={CONFIG.ctaFinal.formulario.nomePlaceholder}
+                                    className="w-full bg-branco text-escura border border-texto/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors font-sans placeholder-texto/30 disabled:opacity-50"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-[9px] uppercase tracking-widest text-texto-suave font-bold font-sans">
+                                    {CONFIG.ctaFinal.formulario.whatsappLabel}
+                                  </label>
+                                  <input
+                                    type="tel"
+                                    required
+                                    value={whatsappModalForm}
+                                    onChange={(e) => setWhatsappModalForm(e.target.value)}
+                                    disabled={enviandoModalForm}
+                                    placeholder={CONFIG.ctaFinal.formulario.whatsappPlaceholder}
+                                    className="w-full bg-branco text-escura border border-texto/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors font-sans placeholder-texto/30 disabled:opacity-50"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowModalForm(false)}
+                                  disabled={enviandoModalForm}
+                                  className="px-4 py-2 border border-texto/10 text-texto-suave hover:border-texto/30 text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="submit"
+                                  disabled={enviandoModalForm}
+                                  className="px-6 py-2 bg-acento text-branco hover:bg-acento-escuro text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50"
+                                >
+                                  {enviandoModalForm ? "Enviando..." : "Enviar"}
+                                </button>
+                              </div>
+                            </form>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
@@ -1640,12 +1789,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* BOTÃO FLUTUANTE DE WHATSAPP */}
+        {/* BOTÃO FLUTUANTE DE WHATSAPP (SÓ EM DESKTOP) */}
       <a
         href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(CONFIG.infoGerais.mensagemWhatsappPadrao)}`}
         target="_blank"
         rel="noreferrer"
-        className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-[#25D366] text-branco rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 group cursor-pointer"
+        onClick={() => rastrearEvento("clique_whatsapp", { origem: "botao_flutuante" })}
+        className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-[#25D366] text-branco rounded-full hidden md:flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 group cursor-pointer"
         aria-label="Fale Conosco"
       >
         {/* Pulsing rings */}
@@ -1658,6 +1808,25 @@ export default function App() {
         </svg>
       </a>
 
+      {/* BARRA FIXA DE CONVERSÃO MOBILE */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[99] bg-escura-2 border-t border-branco/10 px-6 py-4 shadow-[0_-4px_16px_rgba(0,0,0,0.3)] flex items-center justify-between gap-4">
+        <div className="flex flex-col text-left">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-dourado leading-none mb-1">Contato</span>
+          <span className="font-serif text-sm font-light text-branco leading-tight">Fale com a gente agora</span>
+        </div>
+        <a
+          href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(CONFIG.infoGerais.mensagemWhatsappPadrao)}`}
+          target="_blank"
+          rel="noreferrer"
+          onClick={() => rastrearEvento("clique_whatsapp", { origem: "barra_fixa_mobile" })}
+          className="group inline-flex items-center gap-2 px-5 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-md cursor-pointer flex-shrink-0"
+        >
+          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+          </svg>
+          <span>WhatsApp</span>
+        </a>
+      </div>
     </div>
   );
 }
