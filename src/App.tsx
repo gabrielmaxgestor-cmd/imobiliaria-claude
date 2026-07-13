@@ -10,7 +10,8 @@ import {
   Bed,
   Bath,
   Maximize,
-  Share2
+  Share2,
+  CalendarClock
 } from "lucide-react";
 import { CONFIG, URL_WEBHOOK_LEADS, URL_WEBHOOK_NEWSLETTER } from "./config";
 import { rastrearEvento } from "./tracking";
@@ -51,7 +52,7 @@ export default function App() {
   
   const [nomeForm, setNomeForm] = useState("");
   const [whatsappForm, setWhatsappForm] = useState("");
-  const [procuraForm, setProcuraForm] = useState("");
+  const [periodoForm, setPeriodoForm] = useState("Qualquer horário");
   const [enviandoForm, setEnviandoForm] = useState(false);
 
   const [showModalForm, setShowModalForm] = useState(false);
@@ -155,9 +156,7 @@ export default function App() {
 
   const handleWhatsAppClick = (origem: any = "header") => {
     const originStr = typeof origem === "string" ? origem : "header";
-    const message = encodeURIComponent(
-      `Olá! Gostaria de agendar um atendimento exclusivo com a curadoria da ${CONFIG.infoGerais.nome}.`
-    );
+    const message = encodeURIComponent(CONFIG.infoGerais.mensagemWhatsappPadrao);
     rastrearEvento("clique_whatsapp", { origem: originStr });
     window.open(`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${message}`, "_blank");
   };
@@ -178,7 +177,7 @@ export default function App() {
         body: JSON.stringify({
           nome: nomeForm,
           whatsapp: whatsappForm,
-          procura: procuraForm,
+          procura: `Prefere visita: ${periodoForm}`,
           imovel: "Formulário geral do site"
         })
       });
@@ -187,7 +186,7 @@ export default function App() {
       // Limpar campos após o envio
       setNomeForm("");
       setWhatsappForm("");
-      setProcuraForm("");
+      setPeriodoForm("Qualquer horário");
     } catch (error) {
       console.error("Erro ao enviar dados do formulário:", error);
     } finally {
@@ -307,12 +306,12 @@ export default function App() {
           {/* BOTÃO CTA WHATSAPP (DESKTOP) */}
           <div className="hidden lg:block">
             <button
-              onClick={handleWhatsAppClick}
+              onClick={() => handleWhatsAppClick("header")}
               className="group relative inline-flex items-center justify-center px-6 py-3 border border-escura text-escura text-xs uppercase font-semibold tracking-widest overflow-hidden transition-all duration-500 hover:text-branco rounded-none cursor-pointer"
             >
               <span className="absolute inset-0 w-full h-full bg-escura transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-0"></span>
               <span className="relative z-10 flex items-center gap-2">
-                Atendimento Privado
+                {CONFIG.infoGerais.botaoHeader}
                 <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1" />
               </span>
             </button>
@@ -353,12 +352,12 @@ export default function App() {
             ))}
             <button
               onClick={() => {
-                handleWhatsAppClick();
+                handleWhatsAppClick("header_mobile");
                 setIsMobileMenuOpen(false);
               }}
               className="w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 bg-escura text-branco text-xs uppercase font-semibold tracking-widest transition-colors hover:bg-acento"
             >
-              Atendimento Privado <Phone className="w-3.5 h-3.5" />
+              {CONFIG.infoGerais.botaoHeader} <Phone className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -490,16 +489,12 @@ export default function App() {
                   className="flex flex-col sm:flex-row items-center gap-6"
                 >
                   {/* Botão Primário */}
-                  <a
-                    href="#manifesto"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      document.getElementById("manifesto")?.scrollIntoView({ behavior: "smooth" });
-                    }}
+                  <button
+                    onClick={() => handleWhatsAppClick("hero")}
                     className="w-full sm:w-auto px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
                   >
                     {CONFIG.hero.heroBotaoPrimario}
-                  </a>
+                  </button>
 
                   {/* Link Secundário */}
                   <a
@@ -733,7 +728,7 @@ export default function App() {
                   {/* Botão Primário */}
                   <button
                     onClick={() => setSelectedImovel(destaque)}
-                    className="w-full sm:w-auto px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                    className="w-full sm:w-auto px-8 py-4 bg-transparent hover:bg-branco/10 text-branco border border-branco/30 hover:border-branco/60 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
                   >
                     {CONFIG.destaqueSeção.botaoVerDestaque}
                   </button>
@@ -894,7 +889,7 @@ export default function App() {
                       setFilterLocal("all");
                       setFilterPreco("all");
                     }}
-                    className="px-6 py-3 bg-acento text-branco text-xs uppercase font-sans tracking-widest hover:bg-acento-escuro transition-colors cursor-pointer"
+                    className="px-6 py-3 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 hover:border-texto/40 text-xs uppercase font-sans tracking-widest transition-all duration-300 cursor-pointer"
                   >
                     {CONFIG.filtros.verTodos}
                   </button>
@@ -1005,7 +1000,7 @@ export default function App() {
                               setSelectedImovel(im);
                               setActiveImageIndex(0);
                             }}
-                            className="w-full py-3 border border-acento text-acento hover:bg-acento hover:text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer bg-transparent"
+                            className="w-full py-3 border border-texto/20 text-texto-suave hover:border-texto hover:text-texto hover:bg-texto/5 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer bg-transparent"
                           >
                             Ver detalhes
                           </button>
@@ -1031,7 +1026,7 @@ export default function App() {
                   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
                 }
               }}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-md hover:shadow-lg cursor-pointer"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 hover:border-texto/40 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-md hover:shadow-lg cursor-pointer"
             >
               <span>{CONFIG.colecaoSeção.botaoVerMais}</span>
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -1220,6 +1215,27 @@ export default function App() {
             </p>
           </div>
 
+          {/* Cartão do Corretor Responsável */}
+          {CONFIG.corretorResponsavel && (
+            <div className="flex items-center justify-center gap-4 bg-branco/5 border border-branco/10 p-4 max-w-md mx-auto backdrop-blur-sm rounded-none">
+              <img
+                src={CONFIG.corretorResponsavel.foto}
+                alt={CONFIG.corretorResponsavel.nome}
+                className="w-12 h-12 rounded-full object-cover border border-branco/10"
+                referrerPolicy="no-referrer"
+                loading="lazy"
+              />
+              <div className="text-left font-sans">
+                <p className="text-sm font-semibold text-branco">
+                  Fale direto com {CONFIG.corretorResponsavel.nome}
+                </p>
+                <p className="text-xs text-branco/60">
+                  {CONFIG.corretorResponsavel.creci}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* WhatsApp Button */}
           <div className="flex flex-col items-center justify-center space-y-3">
             <a
@@ -1234,6 +1250,27 @@ export default function App() {
               </svg>
               <span>{CONFIG.ctaFinal.botaoText}</span>
             </a>
+
+            {/* Aviso de Agenda (Urgência Real e Honesta) */}
+            {CONFIG.ctaFinal.avisoAgenda && (
+              <div className="flex items-center gap-2 text-[11px] text-dourado font-sans tracking-wide max-w-sm mx-auto text-center justify-center font-light px-4 leading-relaxed">
+                <CalendarClock className="w-3.5 h-3.5 text-dourado shrink-0" />
+                <span>{CONFIG.ctaFinal.avisoAgenda}</span>
+              </div>
+            )}
+
+            {/* Linha de Prova Social */}
+            {CONFIG.ctaFinal.provaSocial && (
+              <p className="text-xs text-dourado font-sans tracking-wide font-light max-w-md mx-auto">
+                {(() => {
+                  const estatisticaNegociados = CONFIG.estatisticas.find((e) =>
+                    e.legenda.toLowerCase().includes("negociados")
+                  )?.valor || "420+";
+                  return CONFIG.ctaFinal.provaSocial.replace("{familias}", estatisticaNegociados);
+                })()}
+              </p>
+            )}
+
             <span className="text-[10px] uppercase tracking-wider text-branco/40 font-sans">
               {CONFIG.ctaFinal.disclaimer}
             </span>
@@ -1301,24 +1338,35 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <label className="text-[9px] uppercase tracking-widest text-branco/50 font-bold font-sans">
                       {CONFIG.ctaFinal.formulario.procuraLabel}
                     </label>
-                    <textarea
-                      rows={3}
-                      required
-                      value={procuraForm}
-                      onChange={(e) => setProcuraForm(e.target.value)}
-                      disabled={enviandoForm}
-                      placeholder={CONFIG.ctaFinal.formulario.procuraPlaceholder}
-                      className="w-full bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 resize-none disabled:opacity-50"
-                    ></textarea>
+                    <div className="grid grid-cols-3 gap-2">
+                      {["Manhã", "Tarde", "Qualquer horário"].map((opcao) => {
+                        const isSelected = periodoForm === opcao;
+                        return (
+                          <button
+                            key={opcao}
+                            type="button"
+                            disabled={enviandoForm}
+                            onClick={() => setPeriodoForm(opcao)}
+                            className={`py-3 text-xs tracking-wider uppercase font-bold transition-all duration-300 rounded-none cursor-pointer border text-center ${
+                              isSelected
+                                ? "bg-acento text-branco border-acento"
+                                : "bg-branco/5 text-branco/70 border-branco/10 hover:border-branco/30 hover:text-branco"
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {opcao}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <button
                     type="submit"
-                    disabled={enviandoForm}
+                    disabled={enviandoForm || !nomeForm.trim() || !whatsappForm.trim()}
                     className="w-full py-4 bg-branco text-escura hover:bg-dourado hover:text-branco text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {enviandoForm ? "Enviando..." : CONFIG.ctaFinal.formulario.botaoEnviar}
@@ -1351,41 +1399,6 @@ export default function App() {
               <p className="font-sans text-xs text-branco/60 leading-relaxed font-light max-w-sm">
                 {CONFIG.rodapeDescricao}
               </p>
-
-              {/* Formulário de Newsletter */}
-              <form onSubmit={handleSubmitNewsletter} className="space-y-3 max-w-sm pt-2">
-                <span className="text-[9px] uppercase tracking-widest text-branco/50 font-bold font-sans block">
-                  Inscreva-se na nossa Newsletter
-                </span>
-                {newsletterSubmitted ? (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-xs text-dourado font-serif"
-                  >
-                    E-mail cadastrado com sucesso!
-                  </motion.p>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="email"
-                      required
-                      value={emailNewsletter}
-                      onChange={(e) => setEmailNewsletter(e.target.value)}
-                      disabled={enviandoNewsletter}
-                      placeholder="Seu melhor e-mail"
-                      className="flex-grow bg-branco/10 text-branco border border-branco/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 disabled:opacity-50"
-                    />
-                    <button
-                      type="submit"
-                      disabled={enviandoNewsletter}
-                      className="px-5 py-3 bg-branco text-escura hover:bg-dourado hover:text-branco text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {enviandoNewsletter ? "..." : "Assinar"}
-                    </button>
-                  </div>
-                )}
-              </form>
 
               {/* Redes Sociais */}
               <div className="flex items-center gap-4 pt-2">
@@ -1502,6 +1515,43 @@ export default function App() {
               </ul>
             </div>
 
+          </div>
+
+          {/* Formulário de Newsletter Discreto */}
+          <div className="w-full border-t border-branco/5 pt-8 pb-4 mb-4">
+            <form onSubmit={handleSubmitNewsletter} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 max-w-4xl">
+              <span className="font-sans text-xs text-branco/60 font-light">
+                Quer receber novos imóveis assim que chegam? Deixe seu e-mail:
+              </span>
+              {newsletterSubmitted ? (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-xs text-dourado font-serif"
+                >
+                  E-mail cadastrado com sucesso!
+                </motion.p>
+              ) : (
+                <div className="flex gap-2 w-full lg:w-auto">
+                  <input
+                    type="email"
+                    required
+                    value={emailNewsletter}
+                    onChange={(e) => setEmailNewsletter(e.target.value)}
+                    disabled={enviandoNewsletter}
+                    placeholder="Seu e-mail"
+                    className="bg-transparent text-branco border border-branco/10 p-2 px-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-branco/30 disabled:opacity-50 min-w-[200px] w-full lg:w-64"
+                  />
+                  <button
+                    type="submit"
+                    disabled={enviandoNewsletter}
+                    className="px-4 py-2 bg-transparent text-branco border border-branco/20 hover:border-branco/50 text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    {enviandoNewsletter ? "..." : "Assinar"}
+                  </button>
+                </div>
+              )}
+            </form>
           </div>
 
           {/* Linha Divisora */}
@@ -1661,7 +1711,7 @@ export default function App() {
                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                           <a
                             href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(
-                              `Olá! Gostaria de receber mais informações e agendar um atendimento exclusivo para o imóvel: "${selectedImovel.titulo}" localizado em ${selectedImovel.local || selectedImovel.localizacao}.`
+                              `Olá! Gostaria de agendar uma visita ao imóvel ${selectedImovel.titulo}.`
                             )}`}
                             target="_blank"
                             rel="noreferrer"
@@ -1669,7 +1719,7 @@ export default function App() {
                             className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
                           >
                             <Phone className="w-3.5 h-3.5" />
-                            <span>{CONFIG.detalhesModal.botaoWhatsapp}</span>
+                            <span>Agendar visita ao {selectedImovel.titulo}</span>
                           </a>
 
                           <button
@@ -1682,6 +1732,14 @@ export default function App() {
                           </button>
                         </div>
 
+                        {/* Aviso de Agenda (Urgência Real e Honesta) */}
+                        {CONFIG.ctaFinal.avisoAgenda && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-dourado font-sans tracking-wide max-w-xs text-center sm:text-right justify-center sm:justify-end font-light px-2 leading-relaxed">
+                            <CalendarClock className="w-3 h-3 text-dourado shrink-0" />
+                            <span>{CONFIG.ctaFinal.avisoAgenda}</span>
+                          </div>
+                        )}
+
                         {compartilhadoFeedback && (
                           <span className="text-[11px] text-acento font-sans animate-pulse">{compartilhadoFeedback}</span>
                         )}
@@ -1690,7 +1748,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => setShowModalForm(true)}
-                            className="text-xs text-texto-suave hover:text-acento font-sans tracking-wide underline cursor-pointer transition-colors duration-200 bg-transparent border-0 outline-none"
+                            className="text-xs text-texto/50 hover:text-texto font-sans tracking-wide underline cursor-pointer transition-colors duration-200 bg-transparent border-0 p-0 outline-none mt-2"
                           >
                             Prefiro receber informações por aqui
                           </button>
@@ -1771,7 +1829,7 @@ export default function App() {
                                 <button
                                   type="submit"
                                   disabled={enviandoModalForm}
-                                  className="px-6 py-2 bg-acento text-branco hover:bg-acento-escuro text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50"
+                                  className="px-6 py-2 bg-escura text-branco hover:bg-escura/80 text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none cursor-pointer font-sans disabled:opacity-50"
                                 >
                                   {enviandoModalForm ? "Enviando..." : "Enviar"}
                                 </button>
@@ -1796,7 +1854,7 @@ export default function App() {
         rel="noreferrer"
         onClick={() => rastrearEvento("clique_whatsapp", { origem: "botao_flutuante" })}
         className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-[#25D366] text-branco rounded-full hidden md:flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 group cursor-pointer"
-        aria-label="Fale Conosco"
+        aria-label="Agendar Visita"
       >
         {/* Pulsing rings */}
         <span className="absolute inset-0 rounded-full bg-[#25D366]/40 animate-ping z-0"></span>
@@ -1824,7 +1882,7 @@ export default function App() {
           <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
           </svg>
-          <span>WhatsApp</span>
+          <span>Agendar Visita</span>
         </a>
       </div>
     </div>

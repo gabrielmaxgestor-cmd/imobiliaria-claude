@@ -40,6 +40,7 @@ export interface ImobiliariaConfig {
     whatsapp: string; // Número limpo para link: '5511999999999'
     whatsappFormatado: string; // Para exibição: '(11) 99999-9999'
     mensagemWhatsappPadrao: string; // Mensagem padrão para o whatsapp
+    botaoHeader: string; // Botão do header
     email: string;
     telefone: string;
     endereco: string;
@@ -142,6 +143,8 @@ export interface ImobiliariaConfig {
     botaoText: string;
     disclaimer: string;
     divisorText: string;
+    provaSocial: string;
+    avisoAgenda: string;
     formulario: {
       nomeLabel: string;
       nomePlaceholder: string;
@@ -152,6 +155,11 @@ export interface ImobiliariaConfig {
       botaoEnviar: string;
       mensagemSucesso: string;
     };
+  };
+  corretorResponsavel: {
+    nome: string;
+    creci: string;
+    foto: string;
   };
   rodape: {
     textoCredito: string;
@@ -174,7 +182,8 @@ export const CONFIG: ImobiliariaConfig = {
     subtituloLogo: "IMÓVEIS D'ALMA",
     whatsapp: "5511999999999",
     whatsappFormatado: "(11) 99999-9999",
-    mensagemWhatsappPadrao: "Olá! Gostaria de agendar um atendimento exclusivo e conhecer imóveis selecionados.",
+    mensagemWhatsappPadrao: "Olá! Gostaria de agendar uma visita ou conversa com um corretor.",
+    botaoHeader: "Agendar Visita",
     email: "contato@auraimoveis.com.br",
     telefone: "(11) 3040-0000",
     endereco: "Al. Lorena, 1200 - Jardins, São Paulo - SP",
@@ -208,7 +217,7 @@ export const CONFIG: ImobiliariaConfig = {
     heroFraseAbertura: "Existe um lugar esperando por você.",
     heroTitulo: "Encontre o lugar onde sua história continua",
     heroSubtitulo: "Não vendemos endereços. Ajudamos você a encontrar onde a próxima fase da sua vida vai acontecer.",
-    heroBotaoPrimario: "Quero sentir isso de perto",
+    heroBotaoPrimario: "Quero agendar minha visita",
     heroBotaoSecundario: "Já sei o que procuro ↓",
     heroVideoUrl: "", // SUBSTITUIR PELA URL DO VÍDEO FINAL
     heroImagemFallback: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80",
@@ -250,7 +259,7 @@ export const CONFIG: ImobiliariaConfig = {
     eyebrow: "UM EXEMPLO DO QUE ESTAMOS FALANDO",
     titulo: "Imagine acordar aqui.",
     descricaoTemplate: "Luz da manhã entrando pela varanda. Café pronto enquanto você ainda decide o que fazer no fim de semana. Um jardim que vira extensão da sala da",
-    botaoVerDestaque: "Quero conhecer esse imóvel",
+    botaoVerDestaque: "Quero agendar uma visita a este imóvel",
     botaoVerOutros: "Ver outras possibilidades",
   },
   imovelDestaque: {
@@ -476,19 +485,26 @@ export const CONFIG: ImobiliariaConfig = {
     eyebrow: "VAMOS CONVERSAR",
     titulo: "Vamos encontrar o lugar onde sua próxima história começa?",
     subtitulo: "Fale com a gente agora e receba uma seleção pensada para o que você procura — sem forçar, sem pressa.",
-    botaoText: "Chamar no WhatsApp",
+    botaoText: "Quero agendar minha visita",
     disclaimer: "Conversa direta, humana e personalizada",
     divisorText: "ou se preferir, nós entramos em contato",
+    provaSocial: "Junte-se a mais de {familias} famílias que já agendaram sua visita conosco",
+    avisoAgenda: "Atendemos poucas visitas por dia para dar atenção real a cada família — agende com antecedência.",
     formulario: {
       nomeLabel: "Seu Nome",
       nomePlaceholder: "Como gostaria de ser chamado?",
       whatsappLabel: "Seu WhatsApp",
       whatsappPlaceholder: "(00) 00000-0000",
-      procuraLabel: "O que você procura?",
+      procuraLabel: "Período preferido para a visita",
       procuraPlaceholder: "Ex: Apartamento nos Jardins com 3 suítes, ou casa em condomínio fechado...",
       botaoEnviar: "Quero ser contatado",
       mensagemSucesso: "Obrigado pelo interesse! Nossa equipe entrará em contato em breve para apresentar nossa curadoria.",
     },
+  },
+  corretorResponsavel: {
+    nome: "Ana Beatriz Martins",
+    creci: "CRECI 12345-J",
+    foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&h=150&q=80",
   },
   rodape: {
     textoCredito: "© 2026 Aura Imóveis d'Alma. Todos os direitos reservados. Design e curadoria por Aura Lab."
@@ -497,7 +513,7 @@ export const CONFIG: ImobiliariaConfig = {
   detalhesModal: {
     diferenciaisTitulo: "Diferenciais do Imóvel",
     precoLabel: "VALOR DE INVESTIMENTO",
-    botaoWhatsapp: "Chamar no WhatsApp",
+    botaoWhatsapp: "Agendar visita a este imóvel",
     quartosLabel: "quartos",
     banheirosLabel: "banheiros",
     areaLabel: "m²"
