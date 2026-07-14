@@ -171,7 +171,7 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowIntro(false);
-    }, 2500);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -319,12 +319,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-fundo text-texto flex flex-col selection:bg-acento/20 selection:text-acento-escuro">
+      {/* 0. TEXTURA DE GRÃO GLOBAL */}
+      <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] mix-blend-overlay bg-repeat bg-grain" />
       
       {/* 1. HEADER FIXO */}
       <header
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-fundo/90 backdrop-blur-md py-4 border-b border-texto/5 shadow-[0_4px_30px_rgba(30,43,32,0.03)]"
+            ? "bg-fundo/90 backdrop-blur-md py-4 border-b border-texto/5 elevacao-3"
             : "bg-transparent py-7"
         }`}
       >
@@ -387,7 +389,7 @@ export default function App() {
 
         {/* NAVEGAÇÃO MOBILE */}
         <div
-          className={`fixed inset-x-0 top-full bg-fundo border-b border-texto/5 shadow-lg transition-all duration-500 ease-in-out lg:hidden overflow-hidden ${
+          className={`fixed inset-x-0 top-full bg-fundo border-b border-texto/5 elevacao-3 transition-all duration-500 ease-in-out lg:hidden overflow-hidden ${
             isMobileMenuOpen ? "max-h-[85vh] opacity-100 py-6" : "max-h-0 opacity-0 pointer-events-none"
           }`}
         >
@@ -433,7 +435,10 @@ export default function App() {
       >
         {/* VÍDEO DE FUNDO */}
         {/* SUBSTITUIR PELA URL DO VÍDEO FINAL */}
-        <video
+        <motion.video
+          initial={{ scale: 1.08 }}
+          animate={{ scale: 1.00 }}
+          transition={{ duration: 10, ease: [0.16, 1, 0.3, 1] }}
           autoPlay
           muted
           loop
@@ -442,7 +447,7 @@ export default function App() {
           poster={CONFIG.hero.heroImagemFallback}
         >
           {CONFIG.hero.heroVideoUrl && <source src={CONFIG.hero.heroVideoUrl} type="video/mp4" />}
-        </video>
+        </motion.video>
 
         {/* OVERLAY DE VERDE PROFUNDO */}
         <div className="absolute inset-0 bg-gradient-to-t from-escura-2/95 via-escura/70 to-escura-2/40 z-10"></div>
@@ -453,38 +458,32 @@ export default function App() {
             {showIntro ? (
               <motion.div
                 key="intro"
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
                 className="max-w-2xl"
               >
-                <span className="font-serif text-2xl md:text-4xl italic text-branco/90 tracking-wide font-light leading-relaxed">
+                <span className="tipo-subtitulo font-serif italic text-branco/90 tracking-wide block animate-pulse">
                   {CONFIG.hero.heroFraseAbertura}
                 </span>
               </motion.div>
             ) : (
               <motion.div
                 key="content"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: {
-                    opacity: 1,
-                    transition: {
-                      staggerChildren: 0.25,
-                      delayChildren: 0.1,
-                    },
-                  },
-                }}
                 initial="hidden"
                 animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: {}
+                }}
                 className="flex flex-col items-center max-w-4xl"
               >
                 {/* Linha divisora elegante */}
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, scaleX: 0 },
-                    visible: { opacity: 1, scaleX: 1, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
+                    visible: { opacity: 1, scaleX: 1, transition: { delay: 0.1, duration: 1.0, ease: [0.16, 1, 0.3, 1] } }
                   }}
                   className="w-[60px] h-[1px] bg-dourado mb-8"
                 ></motion.div>
@@ -493,37 +492,79 @@ export default function App() {
                 <motion.span
                   variants={{
                     hidden: { opacity: 0, y: 15 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
+                    visible: { opacity: 1, y: 0, transition: { delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
                   }}
-                  className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold mb-6"
+                  className="tipo-legenda text-dourado font-bold mb-6 block"
                 >
                   {CONFIG.hero.heroEyebrow}
                 </motion.span>
 
-                {/* Título Principal */}
+                {/* Título Principal com efeito de Reveal de Linhas */}
                 <motion.h1
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 1.4, ease: [0.16, 1, 0.3, 1] } }
-                  }}
-                  className="font-serif text-4xl md:text-6xl lg:text-7xl font-light text-branco tracking-tight leading-[1.1] mb-6 max-w-3xl"
+                  className="tipo-h1 text-branco mb-6 max-w-3xl"
                 >
                   {(() => {
                     const texto = CONFIG.hero.heroTitulo;
                     const highlight = "onde sua história continua";
+                    let line1 = texto;
+                    let line2 = "";
+                    
                     if (texto.includes(highlight)) {
                       const parts = texto.split(highlight);
-                      return (
-                        <>
-                          {parts[0]}
-                          <span className="italic text-dourado font-medium block md:inline">
-                            {highlight}
-                          </span>
-                          {parts[1]}
-                        </>
-                      );
+                      line1 = parts[0].trim();
+                      line2 = highlight;
+                    } else {
+                      const words = texto.split(" ");
+                      const half = Math.ceil(words.length / 2);
+                      line1 = words.slice(0, half).join(" ");
+                      line2 = words.slice(half).join(" ");
                     }
-                    return texto;
+                    
+                    return (
+                      <span className="flex flex-col items-center gap-1 md:gap-2">
+                        <span className="overflow-hidden block py-1">
+                          <motion.span
+                            variants={{
+                              hidden: { opacity: 0, y: "100%" },
+                              visible: { 
+                                opacity: 1, 
+                                y: 0, 
+                                transition: { 
+                                  delay: 0.5, 
+                                  duration: 1.0, 
+                                  ease: [0.16, 1, 0.3, 1] 
+                                } 
+                              }
+                            }}
+                            className="block text-branco"
+                          >
+                            {line1}
+                          </motion.span>
+                        </span>
+                        
+                        {line2 && (
+                          <span className="overflow-hidden block py-1">
+                            <motion.span
+                              variants={{
+                                hidden: { opacity: 0, y: "100%" },
+                                visible: { 
+                                  opacity: 1, 
+                                  y: 0, 
+                                  transition: { 
+                                    delay: 0.8, 
+                                    duration: 1.0, 
+                                    ease: [0.16, 1, 0.3, 1] 
+                                  } 
+                                }
+                              }}
+                              className="italic text-dourado font-medium block"
+                            >
+                              {line2}
+                            </motion.span>
+                          </span>
+                        )}
+                      </span>
+                    );
                   })()}
                 </motion.h1>
 
@@ -531,9 +572,9 @@ export default function App() {
                 <motion.p
                   variants={{
                     hidden: { opacity: 0, y: 15 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
+                    visible: { opacity: 1, y: 0, transition: { delay: 1.1, duration: 1.0, ease: [0.16, 1, 0.3, 1] } }
                   }}
-                  className="font-sans text-sm md:text-base text-branco/80 max-w-2xl font-light leading-relaxed mb-10"
+                  className="tipo-subtitulo text-branco/80 max-w-2xl mb-10"
                 >
                   {CONFIG.hero.heroSubtitulo}
                 </motion.p>
@@ -542,14 +583,14 @@ export default function App() {
                 <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 15 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
+                    visible: { opacity: 1, y: 0, transition: { delay: 1.3, duration: 1.0, ease: [0.16, 1, 0.3, 1] } }
                   }}
                   className="flex flex-col sm:flex-row items-center gap-6"
                 >
                   {/* Botão Primário */}
                   <button
                     onClick={() => handleWhatsAppClick("hero")}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer animate-breath-acento"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center elevacao-1 hover:elevacao-2 cursor-pointer animate-breath-acento"
                   >
                     <Calendar className="w-4 h-4 shrink-0" />
                     <span>{CONFIG.hero.heroBotaoPrimario}</span>
@@ -565,7 +606,7 @@ export default function App() {
                     className="group flex items-center gap-2 text-branco/80 hover:text-branco text-xs uppercase font-semibold tracking-widest border-b border-branco/20 hover:border-branco/60 pb-1.5 transition-all duration-300 cursor-pointer"
                   >
                     <span>{CONFIG.hero.heroBotaoSecundario}</span>
-                  </a >
+                  </a>
                 </motion.div>
               </motion.div>
             )}
@@ -577,7 +618,7 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 1 }}
+            transition={{ delay: 1.2, duration: 1 }}
             className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center gap-2"
           >
             <span className="text-[9px] uppercase tracking-[0.25em] text-branco/50 font-sans font-medium">
@@ -595,8 +636,8 @@ export default function App() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={!showIntro ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="bg-branco border border-texto/5 shadow-2xl p-6 sm:p-8 rounded-none"
+          transition={{ duration: 1.2, delay: 2.0, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-branco border border-texto/5 elevacao-2 p-6 sm:p-8 rounded-none"
         >
           {/* Alternador Comprar / Alugar */}
           <div className="flex items-center gap-2 mb-6 border-b border-texto/10 pb-4">
@@ -696,7 +737,7 @@ export default function App() {
             <div>
               <button
                 onClick={handleSearchSubmit}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none shadow-md hover:shadow-lg cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none elevacao-1 hover:elevacao-2 cursor-pointer"
               >
                 <span>Encontrar imóveis</span>
                 <span className="text-xs">→</span>
@@ -709,7 +750,7 @@ export default function App() {
       {/* 3. MANIFESTO (SEÇÃO DE CRENÇA/PROPÓSITO, SÓ TEXTO) */}
       <section
         id="manifesto"
-        className="relative bg-escura text-branco py-32 md:py-48 px-6 md:px-12 scroll-mt-20 z-10 overflow-hidden"
+        className="relative bg-[radial-gradient(circle_at_top_left,_#2a3b2c_0%,_#1e2b20_100%)] text-branco py-20 md:py-32 px-6 md:px-12 scroll-mt-20 z-10 overflow-hidden"
       >
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
           
@@ -731,7 +772,7 @@ export default function App() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl font-light text-branco tracking-tight leading-tight md:leading-snug max-w-3xl mx-auto">
+              <h2 className="tipo-h2 text-branco max-w-3xl mx-auto">
                 {CONFIG.manifesto.manifestoBloco1}
               </h2>
             </motion.div>
@@ -744,7 +785,7 @@ export default function App() {
               transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-4 text-branco/80"
             >
-              <div className="font-sans text-lg md:text-2xl font-light leading-relaxed max-w-3xl mx-auto whitespace-pre-line tracking-wide">
+              <div className="tipo-subtitulo text-branco/80 max-w-3xl mx-auto whitespace-pre-line">
                 {CONFIG.manifesto.manifestoBloco2}
               </div>
             </motion.div>
@@ -756,7 +797,7 @@ export default function App() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <p className="font-serif text-2xl md:text-4xl italic text-dourado font-medium max-w-3xl mx-auto leading-relaxed">
+              <p className="tipo-subtitulo font-serif italic text-dourado max-w-3xl mx-auto">
                 “{CONFIG.manifesto.manifestoBloco3}”
               </p>
             </motion.div>
@@ -769,7 +810,7 @@ export default function App() {
       {/* 4. DIFERENCIAIS (O COMO) */}
       <section
         id="diferenciais"
-        className="relative bg-escura text-branco py-24 md:py-36 px-6 md:px-12 scroll-mt-20 z-10 overflow-hidden border-t border-branco/5"
+        className="relative bg-[radial-gradient(circle_at_top_right,_#253527_0%,_#1e2b20_100%)] text-branco py-16 md:py-24 px-6 md:px-12 scroll-mt-20 z-10 overflow-hidden border-t border-branco/5"
       >
         <div className="max-w-7xl mx-auto">
           
@@ -780,7 +821,7 @@ export default function App() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold mb-4 block"
+              className="tipo-legenda text-dourado font-bold mb-4 block"
             >
               {CONFIG.diferenciaisSeção.eyebrow}
             </motion.span>
@@ -790,7 +831,7 @@ export default function App() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-serif text-3xl md:text-5xl font-light tracking-tight text-branco leading-tight"
+              className="tipo-h2 text-branco"
             >
               {CONFIG.diferenciaisSeção.titulo}
             </motion.h2>
@@ -852,7 +893,7 @@ export default function App() {
           >
             {/* Background Image with hover zoom effect */}
             <div 
-              className="absolute inset-0 transition-transform duration-[1.5s] ease-out scale-100 group-hover:scale-[1.03] z-0"
+              className="absolute inset-0 transition-transform duration-[1.5s] ease-out scale-100 group-hover:scale-[1.03] z-0 imagem-tratada"
               style={{
                 backgroundImage: `url(${destaque.imagemUrl})`,
                 backgroundSize: "cover",
@@ -872,7 +913,7 @@ export default function App() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block"
+                  className="tipo-legenda text-dourado font-bold block"
                 >
                   {CONFIG.destaqueSeção.eyebrow}
                 </motion.span>
@@ -882,7 +923,7 @@ export default function App() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                  className="font-serif text-4xl md:text-6xl font-light text-branco tracking-tight leading-tight"
+                  className="tipo-h2 text-branco"
                 >
                   {CONFIG.destaqueSeção.titulo}
                 </motion.h2>
@@ -892,7 +933,7 @@ export default function App() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="font-sans text-sm md:text-base text-branco/80 font-light leading-relaxed max-w-xl"
+                  className="tipo-subtitulo text-branco/80 max-w-xl"
                 >
                   {CONFIG.destaqueSeção.descricaoTemplate} {destaque.titulo}.
                 </motion.p>
@@ -910,16 +951,16 @@ export default function App() {
                       setSelectedImovel(destaque);
                       setActiveImageIndex(0);
                     }}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-branco text-escura hover:bg-branco/90 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-branco text-escura hover:bg-branco/90 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center elevacao-1 hover:elevacao-2 cursor-pointer"
                   >
-                    <Info className="w-4 h-4 shrink-0 text-dourado" />
+                    <Info className="w-4 h-4 shrink-0 text-texto-suave" />
                     <span>Mais Informações</span>
                   </button>
 
                   {/* Botão Primário */}
                   <button
                     onClick={() => setSelectedImovel(destaque)}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center elevacao-1 hover:elevacao-2 cursor-pointer"
                   >
                     <Calendar className="w-4 h-4 shrink-0" />
                     <span>{CONFIG.destaqueSeção.botaoVerDestaque}</span>
@@ -948,19 +989,19 @@ export default function App() {
       {/* 6. GRID DE IMÓVEIS (SELEÇÃO ATUAL) */}
       <section
         id="imoveis"
-        className="w-full bg-fundo text-escura py-20 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+        className="w-full bg-fundo text-escura py-16 md:py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
       >
         <div className="container mx-auto max-w-7xl">
           
           {/* Header da Seção */}
           <div className="text-center md:text-left mb-12 md:mb-16 max-w-3xl">
-            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block mb-3">
+            <span className="tipo-legenda text-texto-suave font-bold block mb-3">
               {CONFIG.colecaoSeção.eyebrow}
             </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-light text-escura tracking-tight leading-tight mb-4">
+            <h2 className="tipo-h2 text-escura mb-4">
               {CONFIG.colecaoSeção.titulo}
             </h2>
-            <p className="font-sans text-sm md:text-base text-texto-suave font-light leading-relaxed">
+            <p className="tipo-subtitulo text-texto-suave">
               {CONFIG.colecaoSeção.subtitulo}
             </p>
           </div>
@@ -1137,7 +1178,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => setFilterEstiloDeVida("all")}
-                      className="text-xs uppercase tracking-widest font-sans font-bold text-dourado hover:text-escura transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-0"
+                      className="text-xs uppercase tracking-widest font-sans font-bold text-texto-suave hover:text-escura transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-0"
                     >
                       Ver todos os estilos <span>&times;</span>
                     </button>
@@ -1154,27 +1195,27 @@ export default function App() {
                       whileInView="visible"
                       viewport={{ once: true, margin: "-80px" }}
                       transition={{ delay: (index % 2) * 0.1 }}
-                      className="group bg-branco border border-texto/5 overflow-hidden flex flex-col justify-between hover:scale-[1.015] hover:shadow-2xl transition-all duration-500"
+                      className="group bg-branco border border-texto/5 overflow-hidden flex flex-col justify-between hover:scale-[1.015] elevacao-1 hover:elevacao-2 transition-all duration-500"
                     >
                       {/* Image Container with overlays */}
-                      <div className="relative aspect-[4/3] overflow-hidden bg-escura">
+                      <div className="relative aspect-[4/3] overflow-hidden bg-escura card-imagem-container">
                         <img
                           src={im.imagemPrincipal}
                           alt={im.titulo}
-                          className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105 imagem-tratada"
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-escura-2/60 via-escura-2/20 to-transparent z-10"></div>
                         
                         {/* Dynamic Label/Tag */}
                         {im.tag && (
-                          <span className="absolute top-6 left-6 px-3 py-1 bg-dourado text-branco text-[9px] font-sans font-bold uppercase tracking-widest z-20 shadow-md">
+                          <span className="absolute top-6 left-6 px-3 py-1 bg-dourado text-branco text-[9px] font-sans font-bold uppercase tracking-widest z-20 elevacao-1">
                             {im.tag}
                           </span>
                         )}
 
                         {/* Price Overlay */}
-                        <div className="absolute bottom-6 left-6 bg-escura-2/95 backdrop-blur-md border border-branco/15 px-5 py-2.5 text-branco font-serif text-lg md:text-xl tracking-wider z-20 transition-all duration-300 group-hover:border-dourado/40 shadow-lg">
+                        <div className="absolute bottom-6 left-6 bg-escura-2/95 backdrop-blur-md border border-branco/15 px-5 py-2.5 text-branco font-serif text-lg md:text-xl tracking-wider z-20 transition-all duration-300 group-hover:border-dourado/40 elevacao-2">
                           {im.preco}
                         </div>
 
@@ -1203,7 +1244,7 @@ export default function App() {
                         <div className="space-y-4">
                           {/* Location */}
                           <div className="flex items-center gap-2 text-texto-suave text-xs font-sans tracking-wide">
-                            <svg className="w-3.5 h-3.5 text-dourado shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                            <svg className="w-3.5 h-3.5 text-texto-suave shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                             </svg>
@@ -1211,12 +1252,12 @@ export default function App() {
                           </div>
 
                           {/* Title */}
-                          <h3 className="font-serif text-2xl md:text-3xl font-light text-escura leading-tight group-hover:text-dourado transition-colors duration-300">
+                          <h3 className="tipo-card-titulo text-escura group-hover:text-dourado transition-colors duration-300">
                             {im.titulo}
                           </h3>
 
                           {/* Clima Phrase (Earthy/Poetic tone) */}
-                          <p className="font-serif text-xs text-dourado/95 italic font-medium tracking-wide">
+                          <p className="font-serif text-xs text-texto-suave/95 italic font-medium tracking-wide">
                             "{im.fraseClima}"
                           </p>
 
@@ -1232,7 +1273,7 @@ export default function App() {
                             {/* Quartos */}
                             <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2.5">
                               {/* Inline SVG for Bed */}
-                              <svg className="w-4 h-4 text-dourado/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="w-4 h-4 text-texto-suave/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12V18a2 2 0 002 2h10a2 2 0 002-2v-6" />
                               </svg>
                               <span className="text-[10px] font-medium">{im.quartos} qtos</span>
@@ -1241,7 +1282,7 @@ export default function App() {
                             {/* Banheiros */}
                             <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2.5">
                               {/* Inline SVG for Bath */}
-                              <svg className="w-4 h-4 text-dourado/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="w-4 h-4 text-texto-suave/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545" />
                               </svg>
                               <span className="text-[10px] font-medium">{im.banheiros} banhs</span>
@@ -1250,7 +1291,7 @@ export default function App() {
                             {/* Area */}
                             <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2.5">
                               {/* Inline SVG for Maximize */}
-                              <svg className="w-4 h-4 text-dourado/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="w-4 h-4 text-texto-suave/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
                               </svg>
                               <span className="text-[10px] font-medium">{im.area} m²</span>
@@ -1290,7 +1331,7 @@ export default function App() {
                   window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
                 }
               }}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 hover:border-texto/40 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-md hover:shadow-lg cursor-pointer"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 hover:border-texto/40 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center elevacao-1 hover:elevacao-2 cursor-pointer"
             >
               <span>{CONFIG.colecaoSeção.botaoVerMais}</span>
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -1305,16 +1346,16 @@ export default function App() {
       {/* SEÇÃO: ESTILO DE VIDA */}
       <section
         id="estilo-de-vida"
-        className="w-full bg-branco text-escura py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+        className="w-full bg-branco text-escura py-16 md:py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
       >
         <div className="container mx-auto max-w-7xl">
           
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <span className="text-[10px] uppercase tracking-widest text-dourado font-bold font-sans">
+            <span className="tipo-legenda text-texto-suave block">
               Encontre pelo que você busca
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-escura leading-tight">
+            <h2 className="tipo-h2 text-escura">
               Mais do que um imóvel, um jeito de viver
             </h2>
             <div className="w-12 h-[1px] bg-dourado mx-auto mt-6"></div>
@@ -1333,19 +1374,19 @@ export default function App() {
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
                   onClick={() => handleEstiloClick(estilo.titulo)}
-                  className="group relative bg-fundo border border-texto/5 p-8 md:p-10 flex flex-col justify-between items-start transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:border-dourado/30 cursor-pointer overflow-hidden"
+                  className="group relative bg-fundo border border-texto/5 p-8 md:p-10 flex flex-col justify-between items-start transition-all duration-500 hover:-translate-y-2 elevacao-1 hover:elevacao-2 hover:border-dourado/30 cursor-pointer overflow-hidden"
                 >
                   {/* Subtle Background pattern/glow on hover */}
                   <div className="absolute inset-0 bg-gradient-to-br from-dourado/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
                   <div className="relative z-10 w-full">
                     {/* Icon container */}
-                    <div className="w-16 h-16 bg-branco shadow-sm border border-texto/5 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 group-hover:border-dourado/20 transition-all duration-500">
+                    <div className="w-16 h-16 bg-branco elevacao-1 border border-texto/5 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 group-hover:border-dourado/20 transition-all duration-500">
                       {estilo.icone}
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-serif text-xl md:text-2xl font-light text-escura group-hover:text-dourado transition-colors duration-300 mb-3">
+                    <h3 className="tipo-card-titulo text-escura group-hover:text-dourado transition-colors duration-300 mb-3">
                       {estilo.titulo}
                     </h3>
                     
@@ -1383,66 +1424,88 @@ export default function App() {
       {/* SEÇÃO: BAIRROS */}
       <section
         id="bairros"
-        className="w-full bg-fundo text-escura py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+        className="w-full bg-fundo text-escura py-16 md:py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
       >
         <div className="container mx-auto max-w-7xl">
           
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <span className="text-[10px] uppercase tracking-widest text-dourado font-bold font-sans">
+            <span className="tipo-legenda text-texto-suave block">
               Conheça a região
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-escura leading-tight">
+            <h2 className="tipo-h2 text-escura">
               Cada bairro tem sua própria personalidade
             </h2>
             <div className="w-12 h-[1px] bg-dourado mx-auto mt-6"></div>
           </div>
 
           {/* Grid of Neighborhood Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-            {CONFIG.bairrosDestaque.map((bairro, index) => {
-              const count = CONFIG.imoveis.filter(im => im.local === bairro.nome).length;
-              
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={() => handleBairroClick(bairro.nome)}
-                  className="group relative aspect-[3/4] overflow-hidden bg-escura cursor-pointer border border-texto/5 shadow-md flex flex-col justify-end p-6 md:p-8 transition-all duration-500 hover:shadow-2xl"
-                >
-                  {/* Background Image */}
-                  <div className="absolute inset-0 overflow-hidden">
-                    <img
-                      src={bairro.imagem}
-                      alt={bairro.nome}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                      loading="lazy"
-                    />
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {(() => {
+              const sortedBairros = [...CONFIG.bairrosDestaque].sort((a, b) => {
+                const countA = CONFIG.imoveis.filter(im => im.local === a.nome).length;
+                const countB = CONFIG.imoveis.filter(im => im.local === b.nome).length;
+                return countB - countA;
+              });
 
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-escura/90 via-escura/35 to-transparent transition-all duration-500 group-hover:via-escura/50"></div>
+              return sortedBairros.map((bairro, index) => {
+                const count = CONFIG.imoveis.filter(im => im.local === bairro.nome).length;
+                const isFeatured = index === 0;
 
-                  {/* Content (Title & Count) */}
-                  <div className="relative z-10 space-y-2 transform transition-transform duration-500 group-hover:-translate-y-1">
-                    <h3 className="font-serif text-xl md:text-2xl lg:text-3xl font-light text-branco group-hover:text-dourado transition-colors duration-300">
-                      {bairro.nome}
-                    </h3>
-                    <div className="flex items-center justify-between pt-2 border-t border-branco/20">
-                      <span className="text-[10px] uppercase tracking-widest text-branco/70 font-sans font-medium">
-                        {count} {count === 1 ? "imóvel" : "imóveis"}
-                      </span>
-                      <span className="text-dourado text-xs transform translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                        →
-                      </span>
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                    onClick={() => handleBairroClick(bairro.nome)}
+                    className={`group relative overflow-hidden bg-escura cursor-pointer border border-texto/5 elevacao-1 flex flex-col justify-end transition-all duration-500 hover:elevacao-2 ${
+                      isFeatured
+                        ? "h-[320px] md:h-[400px] lg:h-[512px] lg:col-span-2 lg:row-span-2 p-8 md:p-10 lg:p-12"
+                        : "h-[240px] md:h-[280px] lg:h-[240px] p-6 md:p-8"
+                    }`}
+                  >
+                    {/* Badge for Featured Card */}
+                    {isFeatured && (
+                      <div className="absolute top-6 left-6 md:top-8 md:left-8 z-10">
+                        <span className="px-3 py-1 bg-dourado text-branco text-[9px] font-sans font-bold uppercase tracking-widest elevacao-1">
+                          Destaque da Região
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Background Image */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <img
+                        src={bairro.imagem}
+                        alt={bairro.nome}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 imagem-tratada"
+                        loading="lazy"
+                      />
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-escura/90 via-escura/35 to-transparent transition-all duration-500 group-hover:via-escura/50"></div>
+
+                    {/* Content (Title & Count) */}
+                    <div className="relative z-10 space-y-2 transform transition-transform duration-500 group-hover:-translate-y-1">
+                      <h3 className="tipo-card-titulo text-branco group-hover:text-dourado transition-colors duration-300">
+                        {bairro.nome}
+                      </h3>
+                      <div className="flex items-center justify-between pt-2 border-t border-branco/20">
+                        <span className="text-[10px] uppercase tracking-widest text-branco/70 font-sans font-medium">
+                          {count} {count === 1 ? "imóvel" : "imóveis"}
+                        </span>
+                        <span className="text-dourado text-xs transform translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
+                          →
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              });
+            })()}
           </div>
 
         </div>
@@ -1451,18 +1514,18 @@ export default function App() {
       {/* 7. SOBRE (QUEM SOMOS & CREDIBILIDADE) */}
       <section
         id="sobre"
-        className="w-full bg-fundo-alt text-escura py-20 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+        className="w-full bg-fundo-alt text-escura py-16 md:py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
       >
         <div className="container mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             
             {/* Coluna Esquerda - Imagem com Selo */}
             <div className="lg:col-span-5 relative group">
-              <div className="relative aspect-[4/5] overflow-hidden bg-escura shadow-xl">
+              <div className="relative aspect-[4/5] overflow-hidden bg-escura elevacao-2">
                 <img
                   src={CONFIG.sobre.imagemUrl}
                   alt={CONFIG.sobre.nomeGestor}
-                  className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-700"
+                  className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-700 imagem-tratada"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-escura/40 via-transparent to-transparent"></div>
               </div>
@@ -1473,7 +1536,7 @@ export default function App() {
                 whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, type: "spring", bounce: 0.2 }}
-                className="absolute -bottom-6 -right-6 md:-right-8 w-44 h-44 bg-escura text-branco rounded-full flex flex-col items-center justify-center p-6 text-center shadow-2xl border border-dourado/40 z-20"
+                className="absolute -bottom-6 -right-6 md:-right-8 w-44 h-44 bg-escura text-branco rounded-full flex flex-col items-center justify-center p-6 text-center elevacao-3 border border-dourado/40 z-20"
               >
                 <span className="font-serif text-4xl font-light text-dourado tracking-tight mb-1">
                   {CONFIG.estatisticas.find(e => e.legenda.includes("anos"))?.valor || "12"}
@@ -1487,15 +1550,15 @@ export default function App() {
             {/* Coluna Direita - Conteúdo Textual */}
             <div className="lg:col-span-7 space-y-8 lg:pl-6">
               <div className="space-y-4">
-                <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block">
+                <span className="tipo-legenda text-texto-suave font-bold block">
                   {CONFIG.sobre.eyebrow}
                 </span>
-                <h2 className="font-serif text-3xl md:text-5xl font-light text-escura tracking-tight leading-tight">
+                <h2 className="tipo-h2 text-escura">
                   {CONFIG.sobre.titulo}
                 </h2>
               </div>
 
-              <div className="space-y-5 font-sans text-sm md:text-base text-texto-suave font-light leading-relaxed">
+              <div className="space-y-5 tipo-corpo text-texto-suave">
                 {CONFIG.sobre.textoParagrafos.map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
@@ -1505,7 +1568,7 @@ export default function App() {
               <div className="border-t border-texto/10 pt-6 flex items-center gap-4">
                 <div className="space-y-0.5">
                   <span className="font-serif text-lg font-light text-escura block">{CONFIG.sobre.nomeGestor}</span>
-                  <span className="font-sans text-xs text-dourado uppercase tracking-wider">{CONFIG.sobre.cargoGestor}</span>
+                  <span className="font-sans text-xs text-texto-suave uppercase tracking-wider">{CONFIG.sobre.cargoGestor}</span>
                 </div>
               </div>
 
@@ -1531,16 +1594,16 @@ export default function App() {
       {/* SEÇÃO: EQUIPE */}
       <section
         id="equipe"
-        className="w-full bg-branco text-escura py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+        className="w-full bg-branco text-escura py-16 md:py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
       >
         <div className="container mx-auto max-w-7xl">
           
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block mb-3">
+            <span className="tipo-legenda text-texto-suave font-bold block mb-3">
               Quem vai te atender
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-escura leading-tight">
+            <h2 className="tipo-h2 text-escura">
               Nosso time, à sua disposição
             </h2>
             <div className="w-12 h-[1px] bg-dourado mx-auto mt-6"></div>
@@ -1567,14 +1630,14 @@ export default function App() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                  className="group bg-fundo border border-texto/5 shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full"
+                  className="group bg-fundo border border-texto/5 elevacao-1 hover:elevacao-2 transition-all duration-500 overflow-hidden flex flex-col h-full"
                 >
                   {/* Photo container */}
                   <div className="relative aspect-square overflow-hidden bg-escura">
                     <img
                       src={corretor.foto}
                       alt={corretor.nome}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 imagem-tratada"
                       loading="lazy"
                     />
                     {/* Subtle Overlay on hover */}
@@ -1585,10 +1648,10 @@ export default function App() {
                   <div className="p-6 md:p-8 flex flex-col flex-grow justify-between space-y-6">
                     <div className="space-y-3">
                       <div>
-                        <span className="text-[10px] uppercase tracking-widest text-dourado font-sans font-bold block mb-1">
+                        <span className="tipo-legenda text-texto-suave font-bold block mb-1">
                           {corretor.cargo}
                         </span>
-                        <h3 className="font-serif text-xl md:text-2xl font-light text-escura">
+                        <h3 className="tipo-card-titulo text-escura">
                           {corretor.nome}
                         </h3>
                         <span className="text-[10px] text-texto-suave/80 font-mono">
@@ -1624,16 +1687,16 @@ export default function App() {
       {/* 8. DEPOIMENTOS (HISTÓRIAS QUE COMEÇARAM AQUI) */}
       <section
         id="depoimentos"
-        className="w-full bg-escura text-branco py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+        className="w-full bg-[radial-gradient(circle_at_center,_#2a3b2c_0%,_#1e2b20_100%)] text-branco py-16 md:py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
       >
         <div className="container mx-auto max-w-5xl text-center">
           
           {/* Header da Seção */}
           <div className="max-w-xl mx-auto mb-16">
-            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block mb-3">
+            <span className="tipo-legenda text-dourado font-bold block mb-3">
               {CONFIG.depoimentosSeção.eyebrow}
             </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-light text-branco tracking-tight leading-tight">
+            <h2 className="tipo-h2 text-branco">
               {CONFIG.depoimentosSeção.titulo}
             </h2>
           </div>
@@ -1652,7 +1715,7 @@ export default function App() {
                     transition={{ duration: 0.5, ease: "easeInOut" }}
                     className="space-y-6"
                   >
-                    <p className="font-serif italic text-lg md:text-2xl lg:text-3xl text-branco/90 max-w-3xl mx-auto leading-relaxed">
+                    <p className="tipo-subtitulo font-serif italic text-branco/90 max-w-3xl mx-auto">
                       "{CONFIG.depoimentos[currentDepoimento].texto}"
                     </p>
                     
@@ -1690,7 +1753,7 @@ export default function App() {
       {/* 9. CTA FINAL (VAMOS CONVERSAR) */}
       <section
         id="contato"
-        className="relative w-full py-28 px-6 md:px-12 scroll-mt-24 bg-escura overflow-hidden"
+        className="relative w-full py-20 md:py-32 px-6 md:px-12 scroll-mt-24 bg-[radial-gradient(circle_at_bottom_left,_#2a3b2c_0%,_#1e2b20_100%)] overflow-hidden"
       >
         {/* Background Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
@@ -1700,20 +1763,20 @@ export default function App() {
             className="w-full h-full object-cover opacity-20 grayscale-[20%]"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-escura/95 via-escura/80 to-escura-2"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_rgba(42,59,44,0.95)_0%,_rgba(22,32,26,0.98)_100%)]"></div>
         </div>
 
         <div className="relative z-10 container mx-auto max-w-4xl text-center space-y-12">
           
           {/* Header */}
           <div className="space-y-4 max-w-2xl mx-auto">
-            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block">
+            <span className="tipo-legenda text-dourado font-bold block">
               {CONFIG.ctaFinal.eyebrow}
             </span>
-            <h2 className="font-serif text-3xl md:text-5xl font-light text-branco tracking-tight leading-tight">
+            <h2 className="tipo-h2 text-branco">
               {CONFIG.ctaFinal.titulo}
             </h2>
-            <p className="font-sans text-sm md:text-base text-branco/70 font-light leading-relaxed">
+            <p className="tipo-subtitulo text-branco/70">
               {CONFIG.ctaFinal.subtitulo}
             </p>
           </div>
@@ -1724,7 +1787,7 @@ export default function App() {
               <img
                 src={CONFIG.corretorResponsavel.foto}
                 alt={CONFIG.corretorResponsavel.nome}
-                className="w-12 h-12 rounded-full object-cover border border-branco/10"
+                className="w-12 h-12 rounded-full object-cover border border-branco/10 imagem-tratada"
                 referrerPolicy="no-referrer"
                 loading="lazy"
               />
@@ -1746,7 +1809,7 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
               onClick={() => rastrearEvento("clique_whatsapp", { origem: "cta_final" })}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-xl hover:shadow-2xl cursor-pointer animate-breath-whatsapp"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none elevacao-2 hover:elevacao-3 cursor-pointer animate-breath-whatsapp"
             >
               <Calendar className="w-4 h-4 shrink-0" />
               <span>{CONFIG.ctaFinal.botaoText}</span>
@@ -2141,13 +2204,13 @@ export default function App() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 30 }}
               transition={{ type: "spring", duration: 0.6, bounce: 0.1 }}
-              className="relative w-full max-w-5xl bg-fundo text-escura shadow-2xl rounded-none overflow-hidden my-8"
+              className="relative w-full max-w-5xl bg-fundo text-escura elevacao-3 rounded-none overflow-hidden my-8"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={() => setSelectedImovel(null)}
-                className="absolute top-4 right-4 z-50 p-2.5 bg-fundo/90 hover:bg-escura hover:text-branco text-escura transition-all duration-300 rounded-none cursor-pointer border border-texto/5 shadow-md"
+                className="absolute top-4 right-4 z-50 p-2.5 bg-fundo/90 hover:bg-escura hover:text-branco text-escura transition-all duration-300 rounded-none cursor-pointer border border-texto/5 elevacao-1"
                 aria-label="Fechar"
               >
                 <X className="w-5 h-5" />
@@ -2164,7 +2227,7 @@ export default function App() {
                           : (selectedImovel.imagemPrincipal || selectedImovel.imagemUrl)
                       }
                       alt={selectedImovel.titulo}
-                      className="absolute inset-0 w-full h-full object-cover transition-all duration-500"
+                      className="absolute inset-0 w-full h-full object-cover transition-all duration-500 imagem-tratada"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-escura/40 via-transparent to-transparent"></div>
                     
@@ -2185,7 +2248,7 @@ export default function App() {
                             activeImageIndex === idx ? "border-dourado scale-95" : "border-transparent opacity-60 hover:opacity-100"
                           }`}
                         >
-                          <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                          <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover imagem-tratada" />
                         </button>
                       ))}
                     </div>
@@ -2202,13 +2265,13 @@ export default function App() {
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-serif text-3xl md:text-4xl font-light text-escura tracking-tight leading-tight">
+                    <h3 className="tipo-h2 text-escura">
                       {selectedImovel.titulo}
                     </h3>
 
                     {/* Clima phrase for extra emotion */}
                     {selectedImovel.fraseClima && (
-                      <p className="font-serif text-sm text-dourado italic font-medium">
+                      <p className="font-serif text-sm text-texto-suave italic font-medium">
                         "{selectedImovel.fraseClima}"
                       </p>
                     )}
@@ -2221,15 +2284,15 @@ export default function App() {
                     {/* Metrics/Specifications Grid */}
                     <div className="grid grid-cols-3 gap-4 border-y border-texto/5 py-5 text-center font-sans">
                       <div className="flex flex-col items-center gap-1.5">
-                        <Bed className="w-4 h-4 text-dourado" />
+                        <Bed className="w-4 h-4 text-texto-suave" />
                         <span className="text-xs font-medium text-escura">{selectedImovel.quartos} {CONFIG.detalhesModal.quartosLabel}</span>
                       </div>
                       <div className="flex flex-col items-center gap-1.5">
-                        <Bath className="w-4 h-4 text-dourado" />
+                        <Bath className="w-4 h-4 text-texto-suave" />
                         <span className="text-xs font-medium text-escura">{selectedImovel.banheiros} {CONFIG.detalhesModal.banheirosLabel}</span>
                       </div>
                       <div className="flex flex-col items-center gap-1.5">
-                        <Maximize className="w-4 h-4 text-dourado" />
+                        <Maximize className="w-4 h-4 text-texto-suave" />
                         <span className="text-xs font-medium text-escura">{selectedImovel.area} {CONFIG.detalhesModal.areaLabel}</span>
                       </div>
                     </div>
@@ -2237,7 +2300,7 @@ export default function App() {
                     {/* Features/Characteristics */}
                     {(selectedImovel.caracteristicas || (selectedImovel.tipo && [selectedImovel.tipo])) && (
                       <div className="space-y-3">
-                        <h4 className="text-[10px] uppercase tracking-[0.2em] text-dourado font-bold">{CONFIG.detalhesModal.diferenciaisTitulo}</h4>
+                        <h4 className="text-[10px] uppercase tracking-[0.2em] text-texto-suave font-bold">{CONFIG.detalhesModal.diferenciaisTitulo}</h4>
                         <div className="flex flex-wrap gap-2">
                           {(selectedImovel.caracteristicas || ["Design Exclusivo", "Localização Premium"]).map((char: string, i: number) => (
                             <span
@@ -2269,7 +2332,7 @@ export default function App() {
                             target="_blank"
                             rel="noreferrer"
                             onClick={() => rastrearEvento("clique_whatsapp", { origem: "modal_imovel" })}
-                            className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                            className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center elevacao-1 hover:elevacao-2 cursor-pointer"
                           >
                             <Calendar className="w-4 h-4 shrink-0" />
                             <span>Agendar visita ao {selectedImovel.titulo}</span>
@@ -2280,21 +2343,21 @@ export default function App() {
                             onClick={() => handleCompartilhar(selectedImovel)}
                             className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer"
                           >
-                            <Share2 className="w-3.5 h-3.5 text-dourado" />
+                            <Share2 className="w-3.5 h-3.5 text-texto-suave" />
                             <span>Compartilhar</span>
                           </button>
                         </div>
 
                         {/* Aviso de Agenda (Urgência Real e Honesta) */}
                         {CONFIG.ctaFinal.avisoAgenda && (
-                          <div className="flex items-center gap-1.5 text-[10px] text-dourado font-sans tracking-wide max-w-xs text-center sm:text-right justify-center sm:justify-end font-light px-2 leading-relaxed">
-                            <CalendarClock className="w-3 h-3 text-dourado shrink-0" />
+                          <div className="flex items-center gap-1.5 text-[10px] text-texto-suave font-sans tracking-wide max-w-xs text-center sm:text-right justify-center sm:justify-end font-light px-2 leading-relaxed">
+                            <CalendarClock className="w-3 h-3 text-texto-suave shrink-0" />
                             <span>{CONFIG.ctaFinal.avisoAgenda}</span>
                           </div>
                         )}
 
                         {compartilhadoFeedback && (
-                          <span className="text-[11px] text-dourado font-sans animate-pulse">{compartilhadoFeedback}</span>
+                          <span className="text-[11px] text-texto-suave font-sans animate-pulse">{compartilhadoFeedback}</span>
                         )}
 
                         {!showModalForm && !modalFormSubmitted && (
@@ -2406,7 +2469,7 @@ export default function App() {
         target="_blank"
         rel="noreferrer"
         onClick={() => rastrearEvento("clique_whatsapp", { origem: "botao_flutuante" })}
-        className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-acento text-branco rounded-full hidden md:flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 hover:bg-acento-escuro group cursor-pointer"
+        className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-acento text-branco rounded-full hidden md:flex items-center justify-center elevacao-3 transition-all duration-300 hover:scale-110 hover:bg-acento-escuro group cursor-pointer"
         aria-label="Agendar Visita"
       >
         {/* Pulsing rings */}
@@ -2417,7 +2480,7 @@ export default function App() {
       </a>
 
       {/* BARRA FIXA DE CONVERSÃO MOBILE */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[99] bg-escura-2 border-t border-branco/10 px-6 py-4 shadow-[0_-4px_16px_rgba(0,0,0,0.3)] flex items-center justify-between gap-4">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[99] bg-escura-2 border-t border-branco/10 px-6 py-4 elevacao-3-negativa flex items-center justify-between gap-4">
         <div className="flex flex-col text-left">
           <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-dourado leading-none mb-1">Contato</span>
           <span className="font-serif text-sm font-light text-branco leading-tight">Fale com a gente agora</span>
@@ -2427,7 +2490,7 @@ export default function App() {
           target="_blank"
           rel="noreferrer"
           onClick={() => rastrearEvento("clique_whatsapp", { origem: "barra_fixa_mobile" })}
-          className="group inline-flex items-center gap-2 px-5 py-3 bg-acento hover:bg-acento-escuro text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-md cursor-pointer flex-shrink-0"
+          className="group inline-flex items-center gap-2 px-5 py-3 bg-acento hover:bg-acento-escuro text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none elevacao-1 cursor-pointer flex-shrink-0"
         >
           <Calendar className="w-4 h-4 shrink-0" />
           <span>Agendar Visita</span>

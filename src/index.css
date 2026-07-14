@@ -111,3 +111,66 @@ body {
   animation-play-state: paused;
 }
 
+.bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.imagem-tratada {
+  filter: saturate(0.92) contrast(1.04) sepia(0.06) brightness(1.02);
+}
+
+.card-imagem-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--cor-acento);
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* SISTEMA DE ELEVAÇÃO DE 3 NÍVEIS */
+.elevacao-1 {
+  box-shadow: 0 4px 12px rgba(30, 43, 32, 0.04), 0 1px 3px rgba(30, 43, 32, 0.02);
+}
+
+.elevacao-2 {
+  box-shadow: 0 12px 30px rgba(30, 43, 32, 0.09), 0 4px 12px rgba(30, 43, 32, 0.04);
+}
+
+.elevacao-3 {
+  box-shadow: 0 20px 40px rgba(10, 16, 12, 0.16), 0 8px 16px rgba(10, 16, 12, 0.08);
+}
+
+.elevacao-3-negativa {
+  box-shadow: 0 -8px 24px rgba(10, 16, 12, 0.12), 0 -2px 6px rgba(10, 16, 12, 0.06);
+}
+
+/* ESCALA TIPOGRÁFICA CONSISTENTE */
+.tipo-h1 {
+  @apply font-serif font-light text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-none;
+}
+
+.tipo-h2 {
+  @apply font-serif font-light text-3xl md:text-4xl lg:text-5xl tracking-tight leading-tight;
+}
+
+.tipo-subtitulo {
+  @apply font-sans font-light text-sm md:text-base lg:text-lg leading-relaxed;
+}
+
+.tipo-card-titulo {
+  @apply font-serif font-light text-lg md:text-xl tracking-tight leading-snug;
+}
+
+.tipo-corpo {
+  @apply font-sans font-light text-sm md:text-base leading-relaxed;
+}
+
+.tipo-legenda {
+  @apply font-sans font-medium text-[10px] md:text-xs uppercase tracking-[0.3em];
+}
+
+
+
