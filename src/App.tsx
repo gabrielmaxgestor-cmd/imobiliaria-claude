@@ -11,7 +11,9 @@ import {
   Bath,
   Maximize,
   Share2,
-  CalendarClock
+  CalendarClock,
+  Calendar,
+  Info
 } from "lucide-react";
 import { CONFIG, URL_WEBHOOK_LEADS, URL_WEBHOOK_NEWSLETTER } from "./config";
 import { rastrearEvento } from "./tracking";
@@ -26,12 +28,12 @@ const containerVariants = {
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 45 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.8,
       ease: [0.16, 1, 0.3, 1],
     },
   },
@@ -47,6 +49,14 @@ export default function App() {
   const [filterTipo, setFilterTipo] = useState("all");
   const [filterLocal, setFilterLocal] = useState("all");
   const [filterPreco, setFilterPreco] = useState("all");
+  const [filterEstiloDeVida, setFilterEstiloDeVida] = useState("all");
+  const [transacaoTipo, setTransacaoTipo] = useState<"venda" | "aluguel">("venda");
+
+  // Local states for the quick search card
+  const [localTransacao, setLocalTransacao] = useState<"venda" | "aluguel">("venda");
+  const [localTipo, setLocalTipo] = useState("all");
+  const [localLocal, setLocalLocal] = useState("all");
+  const [localPreco, setLocalPreco] = useState("all");
   const [currentDepoimento, setCurrentDepoimento] = useState(0);
   const [formSubmitted, setFormSubmitted] = useState(false);
   
@@ -91,6 +101,55 @@ export default function App() {
       } catch (err) {
         console.error("Erro ao copiar link:", err);
       }
+    }
+  };
+
+  const handleSearchSubmit = () => {
+    setTransacaoTipo(localTransacao);
+    setFilterTipo(localTipo);
+    setFilterLocal(localLocal);
+    setFilterPreco(localPreco);
+    
+    rastrearEvento("busca_inteligente_click", {
+      transacao: localTransacao,
+      tipo: localTipo,
+      local: localLocal,
+      preco: localPreco
+    });
+
+    const element = document.getElementById("imoveis");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleEstiloClick = (titulo: string) => {
+    setFilterEstiloDeVida(titulo);
+    setFilterTipo("all");
+    setFilterLocal("all");
+    setFilterPreco("all");
+    
+    rastrearEvento("filtro_estilo_vida_click", { estilo: titulo });
+
+    const element = document.getElementById("imoveis");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleBairroClick = (nome: string) => {
+    setFilterLocal(nome);
+    setFilterTipo("all");
+    setFilterPreco("all");
+    setFilterEstiloDeVida("all");
+    
+    if (typeof rastrearEvento === "function") {
+      rastrearEvento("filtro_bairro_click", { bairro: nome });
+    }
+
+    const element = document.getElementById("imoveis");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -277,7 +336,7 @@ export default function App() {
             className="group flex flex-col tracking-widest text-left"
             onClick={() => setActiveSection("inicio")}
           >
-            <span className="font-serif text-2xl md:text-3xl font-medium text-escura tracking-wider leading-none transition-colors duration-300 group-hover:text-acento">
+            <span className="font-serif text-2xl md:text-3xl font-medium text-escura tracking-wider leading-none transition-colors duration-300 group-hover:text-dourado">
               {CONFIG.infoGerais.logoText}
             </span>
             <span className="text-[9px] md:text-[10px] uppercase font-sans font-semibold tracking-[0.25em] text-texto-suave mt-1.5 leading-none">
@@ -291,9 +350,9 @@ export default function App() {
               <a
                 key={link.href}
                 href={link.href}
-                className={`font-sans text-[11px] uppercase tracking-[0.2em] font-medium transition-all duration-300 relative py-1 hover:text-acento after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-acento after:transition-all after:duration-300 ${
+                className={`font-sans text-[11px] uppercase tracking-[0.2em] font-medium transition-all duration-300 relative py-1 hover:text-dourado after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-dourado after:transition-all after:duration-300 ${
                   activeSection === link.href.substring(1)
-                    ? "text-acento after:w-full"
+                    ? "text-dourado after:w-full"
                     : "text-texto-suave/80 after:w-0 hover:after:w-full"
                 }`}
                 onClick={() => setActiveSection(link.href.substring(1))}
@@ -307,20 +366,18 @@ export default function App() {
           <div className="hidden lg:block">
             <button
               onClick={() => handleWhatsAppClick("header")}
-              className="group relative inline-flex items-center justify-center px-6 py-3 border border-escura text-escura text-xs uppercase font-semibold tracking-widest overflow-hidden transition-all duration-500 hover:text-branco rounded-none cursor-pointer"
+              className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none cursor-pointer"
             >
-              <span className="absolute inset-0 w-full h-full bg-escura transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out z-0"></span>
-              <span className="relative z-10 flex items-center gap-2">
-                {CONFIG.infoGerais.botaoHeader}
-                <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1" />
-              </span>
+              <Calendar className="w-4 h-4 shrink-0" />
+              <span>{CONFIG.infoGerais.botaoHeader}</span>
+              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-500 group-hover:translate-x-1 group-hover:-translate-y-1" />
             </button>
           </div>
 
           {/* BOTÃO MENU MOBILE (HAMBÚRGUER) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 text-escura hover:text-acento transition-colors duration-300"
+            className="lg:hidden p-2 text-escura hover:text-dourado transition-colors duration-300"
             aria-label="Menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -340,7 +397,7 @@ export default function App() {
                 key={link.href}
                 href={link.href}
                 className={`font-sans text-xs uppercase font-semibold tracking-widest py-2 border-b border-texto/5 transition-colors ${
-                  activeSection === link.href.substring(1) ? "text-acento" : "text-texto-suave"
+                  activeSection === link.href.substring(1) ? "text-dourado" : "text-texto-suave"
                 }`}
                 onClick={() => {
                   setActiveSection(link.href.substring(1));
@@ -355,9 +412,10 @@ export default function App() {
                 handleWhatsAppClick("header_mobile");
                 setIsMobileMenuOpen(false);
               }}
-              className="w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 bg-escura text-branco text-xs uppercase font-semibold tracking-widest transition-colors hover:bg-acento"
+              className="w-full mt-4 flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-colors"
             >
-              {CONFIG.infoGerais.botaoHeader} <Phone className="w-3.5 h-3.5" />
+              <Calendar className="w-4 h-4 shrink-0" />
+              <span>{CONFIG.infoGerais.botaoHeader}</span>
             </button>
           </div>
         </div>
@@ -437,7 +495,7 @@ export default function App() {
                     hidden: { opacity: 0, y: 15 },
                     visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
                   }}
-                  className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-acento font-bold mb-6"
+                  className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold mb-6"
                 >
                   {CONFIG.hero.heroEyebrow}
                 </motion.span>
@@ -491,9 +549,10 @@ export default function App() {
                   {/* Botão Primário */}
                   <button
                     onClick={() => handleWhatsAppClick("hero")}
-                    className="w-full sm:w-auto px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer animate-breath-acento"
                   >
-                    {CONFIG.hero.heroBotaoPrimario}
+                    <Calendar className="w-4 h-4 shrink-0" />
+                    <span>{CONFIG.hero.heroBotaoPrimario}</span>
                   </button>
 
                   {/* Link Secundário */}
@@ -530,6 +589,122 @@ export default function App() {
           </motion.div>
         )}
       </section>
+
+      {/* 2.5 CARD DE BUSCA INTELIGENTE (SOBREPOSTO À BASE DO HERO) */}
+      <div className="relative z-30 max-w-5xl mx-auto px-6 -mt-20 sm:-mt-24 md:-mt-28 mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={!showIntro ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-branco border border-texto/5 shadow-2xl p-6 sm:p-8 rounded-none"
+        >
+          {/* Alternador Comprar / Alugar */}
+          <div className="flex items-center gap-2 mb-6 border-b border-texto/10 pb-4">
+            <button
+              onClick={() => {
+                setLocalTransacao("venda");
+                setLocalPreco("all");
+              }}
+              className={`pb-2 px-4 text-xs uppercase tracking-widest font-semibold transition-all relative rounded-none cursor-pointer ${
+                localTransacao === "venda"
+                  ? "text-acento font-bold border-b-2 border-acento"
+                  : "text-texto-suave hover:text-escura"
+              }`}
+            >
+              Comprar
+            </button>
+            <button
+              onClick={() => {
+                setLocalTransacao("aluguel");
+                setLocalPreco("all");
+              }}
+              className={`pb-2 px-4 text-xs uppercase tracking-widest font-semibold transition-all relative rounded-none cursor-pointer ${
+                localTransacao === "aluguel"
+                  ? "text-acento font-bold border-b-2 border-acento"
+                  : "text-texto-suave hover:text-escura"
+              }`}
+            >
+              Alugar
+            </button>
+          </div>
+
+          {/* Form / Grid de Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 items-end animate-fade-in">
+            {/* Seletor Tipo */}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-texto-suave font-bold block font-sans">
+                Tipo de Imóvel
+              </label>
+              <select
+                value={localTipo}
+                onChange={(e) => setLocalTipo(e.target.value)}
+                className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
+              >
+                <option value="all">Todos os tipos</option>
+                {Array.from(new Set(CONFIG.imoveis.map(im => im.tipo))).map((tipo, idx) => (
+                  <option key={idx} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Seletor Região */}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-texto-suave font-bold block font-sans">
+                Bairro / Região
+              </label>
+              <select
+                value={localLocal}
+                onChange={(e) => setLocalLocal(e.target.value)}
+                className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
+              >
+                <option value="all">Todas as regiões</option>
+                {Array.from(new Set(CONFIG.imoveis.map(im => im.local))).map((local, idx) => (
+                  <option key={idx} value={local}>{local}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Seletor Preço */}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-texto-suave font-bold block font-sans">
+                Faixa de Preço
+              </label>
+              <select
+                value={localPreco}
+                onChange={(e) => setLocalPreco(e.target.value)}
+                className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
+              >
+                <option value="all">Qualquer valor</option>
+                {localTransacao === "venda" ? (
+                  <>
+                    <option value="6000000">Até R$ 6 mi</option>
+                    <option value="10000000">Até R$ 10 mi</option>
+                    <option value="15000000">Até R$ 15 mi</option>
+                    <option value="25000000">Até R$ 25 mi</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="10000">Até R$ 10 mil / mês</option>
+                    <option value="15000">Até R$ 15 mil / mês</option>
+                    <option value="25000">Até R$ 25 mil / mês</option>
+                  </>
+                )}
+              </select>
+            </div>
+
+            {/* Botão Encontrar Imóveis */}
+            <div>
+              <button
+                onClick={handleSearchSubmit}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none shadow-md hover:shadow-lg cursor-pointer"
+              >
+                <span>Encontrar imóveis</span>
+                <span className="text-xs">→</span>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
 
       {/* 3. MANIFESTO (SEÇÃO DE CRENÇA/PROPÓSITO, SÓ TEXTO) */}
       <section
@@ -673,14 +848,18 @@ export default function App() {
         return (
           <section
             id="imovel-destaque"
-            className="relative w-full h-[85vh] md:h-[90vh] flex items-end justify-start overflow-hidden bg-escura-2"
-            style={{
-              backgroundImage: `url(${destaque.imagemUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundAttachment: "fixed",
-            }}
+            className="group relative w-full h-[85vh] md:h-[90vh] flex items-end justify-start overflow-hidden bg-escura-2"
           >
+            {/* Background Image with hover zoom effect */}
+            <div 
+              className="absolute inset-0 transition-transform duration-[1.5s] ease-out scale-100 group-hover:scale-[1.03] z-0"
+              style={{
+                backgroundImage: `url(${destaque.imagemUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundAttachment: "fixed",
+              }}
+            />
             {/* Dark gradient overlay to preserve readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-escura-2/95 via-escura-2/50 to-transparent z-10"></div>
             
@@ -725,12 +904,25 @@ export default function App() {
                   transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-4"
                 >
+                  {/* Botão Mais Informações */}
+                  <button
+                    onClick={() => {
+                      setSelectedImovel(destaque);
+                      setActiveImageIndex(0);
+                    }}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-branco text-escura hover:bg-branco/90 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                  >
+                    <Info className="w-4 h-4 shrink-0 text-dourado" />
+                    <span>Mais Informações</span>
+                  </button>
+
                   {/* Botão Primário */}
                   <button
                     onClick={() => setSelectedImovel(destaque)}
-                    className="w-full sm:w-auto px-8 py-4 bg-transparent hover:bg-branco/10 text-branco border border-branco/30 hover:border-branco/60 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
                   >
-                    {CONFIG.destaqueSeção.botaoVerDestaque}
+                    <Calendar className="w-4 h-4 shrink-0" />
+                    <span>{CONFIG.destaqueSeção.botaoVerDestaque}</span>
                   </button>
 
                   {/* Link Secundário */}
@@ -762,7 +954,7 @@ export default function App() {
           
           {/* Header da Seção */}
           <div className="text-center md:text-left mb-12 md:mb-16 max-w-3xl">
-            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-acento font-bold block mb-3">
+            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block mb-3">
               {CONFIG.colecaoSeção.eyebrow}
             </span>
             <h2 className="font-serif text-3xl md:text-5xl font-light text-escura tracking-tight leading-tight mb-4">
@@ -795,6 +987,24 @@ export default function App() {
 
             return (
               <div className="bg-fundo-alt/40 border border-texto/5 p-6 mb-12 flex flex-col md:flex-row gap-4 md:items-end rounded-none">
+                {/* Modalidade Selector */}
+                <div className="flex-1 space-y-2">
+                  <label className="text-[9px] uppercase tracking-widest text-texto-suave font-bold font-sans">
+                    Modalidade
+                  </label>
+                  <select
+                    value={transacaoTipo}
+                    onChange={(e) => {
+                      setTransacaoTipo(e.target.value as "venda" | "aluguel");
+                      setFilterPreco("all"); // Reset price when transaction mode changes
+                    }}
+                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
+                  >
+                    <option value="venda">Comprar</option>
+                    <option value="aluguel">Alugar</option>
+                  </select>
+                </div>
+
                 {/* Tipo Selector */}
                 <div className="flex-1 space-y-2">
                   <label className="text-[9px] uppercase tracking-widest text-texto-suave font-bold font-sans">
@@ -803,7 +1013,7 @@ export default function App() {
                   <select
                     value={filterTipo}
                     onChange={(e) => setFilterTipo(e.target.value)}
-                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors cursor-pointer font-sans"
+                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
                   >
                     <option value="all">{CONFIG.filtros.tipoTodos}</option>
                     {tiposUnicos.map((tipo, idx) => (
@@ -820,7 +1030,7 @@ export default function App() {
                   <select
                     value={filterLocal}
                     onChange={(e) => setFilterLocal(e.target.value)}
-                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors cursor-pointer font-sans"
+                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
                   >
                     <option value="all">{CONFIG.filtros.localTodos}</option>
                     {locaisUnicos.map((local, idx) => (
@@ -837,24 +1047,36 @@ export default function App() {
                   <select
                     value={filterPreco}
                     onChange={(e) => setFilterPreco(e.target.value)}
-                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors cursor-pointer font-sans"
+                    className="w-full bg-branco text-escura border border-texto/10 p-3.5 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors cursor-pointer font-sans"
                   >
                     <option value="all">{CONFIG.filtros.precoQualquer}</option>
-                    {step1 > 0 && <option value={step1}>Até {formatMillions(step1)}</option>}
-                    {step2 > 0 && <option value={step2}>Até {formatMillions(step2)}</option>}
-                    {maxPreco > 0 && <option value={maxPreco}>Até {formatMillions(maxPreco)}</option>}
+                    {transacaoTipo === "venda" ? (
+                      <>
+                        <option value="6000000">Até R$ 6 mi</option>
+                        <option value="10000000">Até R$ 10 mi</option>
+                        <option value="15000000">Até R$ 15 mi</option>
+                        <option value="25000000">Até R$ 25 mi</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="10000">Até R$ 10 mil / mês</option>
+                        <option value="15000">Até R$ 15 mil / mês</option>
+                        <option value="25000">Até R$ 25 mil / mês</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
                 {/* Limpar Filtros Button */}
-                {(filterTipo !== "all" || filterLocal !== "all" || filterPreco !== "all") && (
+                {(filterTipo !== "all" || filterLocal !== "all" || filterPreco !== "all" || filterEstiloDeVida !== "all") && (
                   <button
                     onClick={() => {
                       setFilterTipo("all");
                       setFilterLocal("all");
                       setFilterPreco("all");
+                      setFilterEstiloDeVida("all");
                     }}
-                    className="px-6 py-4 border border-acento/20 hover:border-acento text-acento text-xs font-sans uppercase tracking-widest transition-colors duration-300 rounded-none bg-transparent cursor-pointer"
+                    className="px-6 py-4 border border-dourado/20 hover:border-dourado text-dourado text-xs font-sans uppercase tracking-widest transition-colors duration-300 rounded-none bg-transparent cursor-pointer"
                   >
                     {CONFIG.filtros.limparFiltros}
                   </button>
@@ -866,8 +1088,10 @@ export default function App() {
           {/* Grid de Cards de Imóveis */}
           {(() => {
             const filtered = CONFIG.imoveis.filter(im => {
+              const matchTransacao = im.transacao === transacaoTipo;
               const matchTipo = filterTipo === "all" || im.tipo === filterTipo;
               const matchLocal = filterLocal === "all" || im.local === filterLocal;
+              const matchEstilo = filterEstiloDeVida === "all" || (im.estiloDeVida && im.estiloDeVida.includes(filterEstiloDeVida));
               
               let matchPreco = true;
               if (filterPreco !== "all") {
@@ -876,7 +1100,7 @@ export default function App() {
                 matchPreco = imPriceNum <= limit;
               }
               
-              return matchTipo && matchLocal && matchPreco;
+              return matchTransacao && matchTipo && matchLocal && matchPreco && matchEstilo;
             });
 
             if (filtered.length === 0) {
@@ -888,6 +1112,7 @@ export default function App() {
                       setFilterTipo("all");
                       setFilterLocal("all");
                       setFilterPreco("all");
+                      setFilterEstiloDeVida("all");
                     }}
                     className="px-6 py-3 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 hover:border-texto/40 text-xs uppercase font-sans tracking-widest transition-all duration-300 cursor-pointer"
                   >
@@ -898,49 +1123,87 @@ export default function App() {
             }
 
             return (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              >
-                {filtered.map((im) => {
+              <div className="space-y-12">
+                {filterEstiloDeVida !== "all" && (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-fundo-alt/50 border border-texto/5 p-5 max-w-6xl mx-auto">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">
+                        {CONFIG.estilosDeVida.find(e => e.titulo === filterEstiloDeVida)?.icone || "✨"}
+                      </span>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-texto-suave font-bold font-sans">Estilo de vida ativo</p>
+                        <h4 className="font-serif text-lg font-light text-escura">{filterEstiloDeVida}</h4>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setFilterEstiloDeVida("all")}
+                      className="text-xs uppercase tracking-widest font-sans font-bold text-dourado hover:text-escura transition-colors cursor-pointer flex items-center gap-1.5 bg-transparent border-0"
+                    >
+                      Ver todos os estilos <span>&times;</span>
+                    </button>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14 max-w-6xl mx-auto">
+                {filtered.map((im, index) => {
                   return (
                     <motion.div
                       key={im.id}
                       variants={cardVariants}
-                      className="group bg-branco border border-texto/5 overflow-hidden flex flex-col justify-between hover:scale-105 hover:shadow-xl transition-all duration-500"
+                      initial="hidden"
+                      whileInView="visible"
+                      viewport={{ once: true, margin: "-80px" }}
+                      transition={{ delay: (index % 2) * 0.1 }}
+                      className="group bg-branco border border-texto/5 overflow-hidden flex flex-col justify-between hover:scale-[1.015] hover:shadow-2xl transition-all duration-500"
                     >
                       {/* Image Container with overlays */}
                       <div className="relative aspect-[4/3] overflow-hidden bg-escura">
                         <img
                           src={im.imagemPrincipal}
                           alt={im.titulo}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
                           loading="lazy"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-escura-2/50 to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-escura-2/60 via-escura-2/20 to-transparent z-10"></div>
                         
                         {/* Dynamic Label/Tag */}
                         {im.tag && (
-                          <span className="absolute top-4 left-4 px-2.5 py-1 bg-acento text-branco text-[9px] font-sans font-bold uppercase tracking-widest">
+                          <span className="absolute top-6 left-6 px-3 py-1 bg-dourado text-branco text-[9px] font-sans font-bold uppercase tracking-widest z-20 shadow-md">
                             {im.tag}
                           </span>
                         )}
 
                         {/* Price Overlay */}
-                        <div className="absolute bottom-4 left-4 bg-escura-2/80 backdrop-blur-sm border border-branco/10 px-3 py-1.5 text-branco font-serif text-sm tracking-wide">
+                        <div className="absolute bottom-6 left-6 bg-escura-2/95 backdrop-blur-md border border-branco/15 px-5 py-2.5 text-branco font-serif text-lg md:text-xl tracking-wider z-20 transition-all duration-300 group-hover:border-dourado/40 shadow-lg">
                           {im.preco}
+                        </div>
+
+                        {/* Hover Sophisticated Overlay: reveals clima & premium characteristics */}
+                        <div className="absolute inset-0 bg-escura-2/85 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8 md:p-10 z-10">
+                          <div className="transform translate-y-6 group-hover:translate-y-0 transition-transform duration-500 delay-75 space-y-4 text-branco">
+                            <span className="text-[10px] uppercase tracking-widest text-dourado font-bold font-sans">Destaque Exclusivo</span>
+                            <p className="font-serif text-sm md:text-base text-branco/90 italic leading-relaxed">
+                              "{im.fraseClima}"
+                            </p>
+                            {im.caracteristicas && (
+                              <div className="flex flex-wrap gap-2 pt-4 border-t border-branco/10">
+                                {im.caracteristicas.slice(0, 3).map((char: string, i: number) => (
+                                  <span key={i} className="text-[9px] text-branco/80 uppercase tracking-widest bg-branco/10 px-2.5 py-1">
+                                    {char}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
                       {/* Content details */}
-                      <div className="p-6 flex-grow flex flex-col justify-between space-y-4">
-                        <div className="space-y-3">
+                      <div className="p-8 sm:p-10 flex-grow flex flex-col justify-between space-y-6">
+                        <div className="space-y-4">
                           {/* Location */}
-                          <div className="flex items-center gap-1.5 text-texto-suave text-xs font-sans tracking-wide">
-                            <svg className="w-3.5 h-3.5 text-acento" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                          <div className="flex items-center gap-2 text-texto-suave text-xs font-sans tracking-wide">
+                            <svg className="w-3.5 h-3.5 text-dourado shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                             </svg>
@@ -948,12 +1211,12 @@ export default function App() {
                           </div>
 
                           {/* Title */}
-                          <h3 className="font-serif text-xl font-light text-escura leading-tight group-hover:text-acento transition-colors duration-300">
+                          <h3 className="font-serif text-2xl md:text-3xl font-light text-escura leading-tight group-hover:text-dourado transition-colors duration-300">
                             {im.titulo}
                           </h3>
 
                           {/* Clima Phrase (Earthy/Poetic tone) */}
-                          <p className="font-serif text-xs text-acento/90 italic font-medium tracking-wide">
+                          <p className="font-serif text-xs text-dourado/95 italic font-medium tracking-wide">
                             "{im.fraseClima}"
                           </p>
 
@@ -963,31 +1226,31 @@ export default function App() {
                           </p>
                         </div>
 
-                        <div className="space-y-4 pt-4 border-t border-texto/5">
+                        <div className="space-y-6 pt-6 border-t border-texto/5">
                           {/* Dynamic Specs with simple SVGs */}
-                          <div className="grid grid-cols-3 gap-2 text-center text-texto font-sans text-xs">
+                          <div className="grid grid-cols-3 gap-3 text-center text-texto font-sans text-xs">
                             {/* Quartos */}
-                            <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2">
+                            <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2.5">
                               {/* Inline SVG for Bed */}
-                              <svg className="w-4 h-4 text-acento/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="w-4 h-4 text-dourado/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12V18a2 2 0 002 2h10a2 2 0 002-2v-6" />
                               </svg>
                               <span className="text-[10px] font-medium">{im.quartos} qtos</span>
                             </div>
 
                             {/* Banheiros */}
-                            <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2">
+                            <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2.5">
                               {/* Inline SVG for Bath */}
-                              <svg className="w-4 h-4 text-acento/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="w-4 h-4 text-dourado/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545" />
                               </svg>
                               <span className="text-[10px] font-medium">{im.banheiros} banhs</span>
                             </div>
 
                             {/* Area */}
-                            <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2">
+                            <div className="flex flex-col items-center gap-1 bg-fundo-alt/20 py-2.5">
                               {/* Inline SVG for Maximize */}
-                              <svg className="w-4 h-4 text-acento/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                              <svg className="w-4 h-4 text-dourado/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
                               </svg>
                               <span className="text-[10px] font-medium">{im.area} m²</span>
@@ -1000,7 +1263,7 @@ export default function App() {
                               setSelectedImovel(im);
                               setActiveImageIndex(0);
                             }}
-                            className="w-full py-3 border border-texto/20 text-texto-suave hover:border-texto hover:text-texto hover:bg-texto/5 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer bg-transparent"
+                            className="w-full py-4 border border-texto/20 text-texto-suave hover:border-texto hover:text-texto hover:bg-texto/5 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer bg-transparent"
                           >
                             Ver detalhes
                           </button>
@@ -1009,7 +1272,8 @@ export default function App() {
                     </motion.div>
                   );
                 })}
-              </motion.div>
+                </div>
+              </div>
             );
           })()}
 
@@ -1033,6 +1297,152 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </a>
+          </div>
+
+        </div>
+      </section>
+
+      {/* SEÇÃO: ESTILO DE VIDA */}
+      <section
+        id="estilo-de-vida"
+        className="w-full bg-branco text-escura py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+      >
+        <div className="container mx-auto max-w-7xl">
+          
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-[10px] uppercase tracking-widest text-dourado font-bold font-sans">
+              Encontre pelo que você busca
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-escura leading-tight">
+              Mais do que um imóvel, um jeito de viver
+            </h2>
+            <div className="w-12 h-[1px] bg-dourado mx-auto mt-6"></div>
+          </div>
+
+          {/* Grid of Lifestyle Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+            {CONFIG.estilosDeVida.map((estilo, index) => {
+              const count = CONFIG.imoveis.filter(im => im.estiloDeVida?.includes(estilo.titulo)).length;
+              
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  onClick={() => handleEstiloClick(estilo.titulo)}
+                  className="group relative bg-fundo border border-texto/5 p-8 md:p-10 flex flex-col justify-between items-start transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:border-dourado/30 cursor-pointer overflow-hidden"
+                >
+                  {/* Subtle Background pattern/glow on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-dourado/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <div className="relative z-10 w-full">
+                    {/* Icon container */}
+                    <div className="w-16 h-16 bg-branco shadow-sm border border-texto/5 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 group-hover:border-dourado/20 transition-all duration-500">
+                      {estilo.icone}
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-serif text-xl md:text-2xl font-light text-escura group-hover:text-dourado transition-colors duration-300 mb-3">
+                      {estilo.titulo}
+                    </h3>
+                    
+                    {/* Simple call to action description */}
+                    <p className="text-xs text-texto-suave leading-relaxed mb-6 font-sans">
+                      {estilo.titulo === "Perto da natureza" && "Refúgios com conexão total à mata, ar puro e silêncio absoluto."}
+                      {estilo.titulo === "Centro histórico" && "Casas e lofts com história, charme arquitetônico e comodidade urbana."}
+                      {estilo.titulo === "Ideal para famílias" && "Espaços amplos, segurança e quintal para as melhores memórias."}
+                      {estilo.titulo === "Investimento" && "Oportunidades de alta liquidez e valorização patrimonial segura."}
+                      {estilo.titulo === "Alto padrão" && "Projetos de grife, acabamento impecável e exclusividade sem igual."}
+                      {estilo.titulo === "Sítios e chácaras" && "Glebas produtivas, lazer rural e sossego do verdadeiro campo."}
+                    </p>
+                  </div>
+
+                  {/* Footer item: count of properties + small arrow */}
+                  <div className="relative z-10 flex items-center justify-between w-full pt-4 border-t border-texto/5 text-xs tracking-wider uppercase font-sans font-bold">
+                    <span className="text-texto-suave text-[10px] tracking-widest">
+                      {count} {count === 1 ? "imóvel" : "imóveis"}
+                    </span>
+                    <span className="text-dourado group-hover:translate-x-1.5 transition-transform duration-300 flex items-center gap-1">
+                      Explorar <span className="font-sans text-sm font-light">→</span>
+                    </span>
+                  </div>
+                  
+                  {/* Bottom animated border line */}
+                  <div className="absolute bottom-0 left-0 w-0 h-[3px] bg-dourado group-hover:w-full transition-all duration-500"></div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
+      {/* SEÇÃO: BAIRROS */}
+      <section
+        id="bairros"
+        className="w-full bg-fundo text-escura py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+      >
+        <div className="container mx-auto max-w-7xl">
+          
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-[10px] uppercase tracking-widest text-dourado font-bold font-sans">
+              Conheça a região
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-escura leading-tight">
+              Cada bairro tem sua própria personalidade
+            </h2>
+            <div className="w-12 h-[1px] bg-dourado mx-auto mt-6"></div>
+          </div>
+
+          {/* Grid of Neighborhood Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+            {CONFIG.bairrosDestaque.map((bairro, index) => {
+              const count = CONFIG.imoveis.filter(im => im.local === bairro.nome).length;
+              
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  onClick={() => handleBairroClick(bairro.nome)}
+                  className="group relative aspect-[3/4] overflow-hidden bg-escura cursor-pointer border border-texto/5 shadow-md flex flex-col justify-end p-6 md:p-8 transition-all duration-500 hover:shadow-2xl"
+                >
+                  {/* Background Image */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <img
+                      src={bairro.imagem}
+                      alt={bairro.nome}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-escura/90 via-escura/35 to-transparent transition-all duration-500 group-hover:via-escura/50"></div>
+
+                  {/* Content (Title & Count) */}
+                  <div className="relative z-10 space-y-2 transform transition-transform duration-500 group-hover:-translate-y-1">
+                    <h3 className="font-serif text-xl md:text-2xl lg:text-3xl font-light text-branco group-hover:text-dourado transition-colors duration-300">
+                      {bairro.nome}
+                    </h3>
+                    <div className="flex items-center justify-between pt-2 border-t border-branco/20">
+                      <span className="text-[10px] uppercase tracking-widest text-branco/70 font-sans font-medium">
+                        {count} {count === 1 ? "imóvel" : "imóveis"}
+                      </span>
+                      <span className="text-dourado text-xs transform translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
+                        →
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
         </div>
@@ -1077,7 +1487,7 @@ export default function App() {
             {/* Coluna Direita - Conteúdo Textual */}
             <div className="lg:col-span-7 space-y-8 lg:pl-6">
               <div className="space-y-4">
-                <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-acento font-bold block">
+                <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block">
                   {CONFIG.sobre.eyebrow}
                 </span>
                 <h2 className="font-serif text-3xl md:text-5xl font-light text-escura tracking-tight leading-tight">
@@ -1095,7 +1505,7 @@ export default function App() {
               <div className="border-t border-texto/10 pt-6 flex items-center gap-4">
                 <div className="space-y-0.5">
                   <span className="font-serif text-lg font-light text-escura block">{CONFIG.sobre.nomeGestor}</span>
-                  <span className="font-sans text-xs text-acento uppercase tracking-wider">{CONFIG.sobre.cargoGestor}</span>
+                  <span className="font-sans text-xs text-dourado uppercase tracking-wider">{CONFIG.sobre.cargoGestor}</span>
                 </div>
               </div>
 
@@ -1103,7 +1513,7 @@ export default function App() {
               <div className="grid grid-cols-3 gap-6 pt-8 border-t border-texto/10">
                 {CONFIG.estatisticas.map((stat, idx) => (
                   <div key={idx} className="space-y-1 text-left">
-                    <span className="font-serif text-3xl md:text-4xl font-light text-acento tracking-tight block">
+                    <span className="font-serif text-3xl md:text-4xl font-light text-dourado tracking-tight block">
                       {stat.valor}
                     </span>
                     <span className="font-sans text-[10px] md:text-xs text-texto-suave uppercase tracking-wider block leading-tight">
@@ -1115,6 +1525,99 @@ export default function App() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* SEÇÃO: EQUIPE */}
+      <section
+        id="equipe"
+        className="w-full bg-branco text-escura py-24 px-6 md:px-12 scroll-mt-24 border-t border-texto/5"
+      >
+        <div className="container mx-auto max-w-7xl">
+          
+          {/* Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-[10px] md:text-xs font-sans uppercase tracking-[0.3em] text-dourado font-bold block mb-3">
+              Quem vai te atender
+            </span>
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light text-escura leading-tight">
+              Nosso time, à sua disposição
+            </h2>
+            <div className="w-12 h-[1px] bg-dourado mx-auto mt-6"></div>
+          </div>
+
+          {/* Grid setup based on the number of members */}
+          <div className={`grid gap-8 justify-center ${
+            CONFIG.equipe.length === 1 
+              ? "max-w-md mx-auto grid-cols-1" 
+              : CONFIG.equipe.length === 2 
+                ? "max-w-3xl mx-auto grid-cols-1 md:grid-cols-2" 
+                : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto"
+          }`}>
+            {CONFIG.equipe.map((corretor, index) => {
+              const primeiroNome = corretor.nome.split(" ")[0];
+              const whatsappNumber = corretor.whatsapp || CONFIG.infoGerais.whatsapp;
+              const whatsappMessage = `Olá ${primeiroNome}, gostaria de conversar sobre imóveis com você!`;
+              const linkUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="group bg-fundo border border-texto/5 shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden flex flex-col h-full"
+                >
+                  {/* Photo container */}
+                  <div className="relative aspect-square overflow-hidden bg-escura">
+                    <img
+                      src={corretor.foto}
+                      alt={corretor.nome}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    {/* Subtle Overlay on hover */}
+                    <div className="absolute inset-0 bg-escura/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="p-6 md:p-8 flex flex-col flex-grow justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-widest text-dourado font-sans font-bold block mb-1">
+                          {corretor.cargo}
+                        </span>
+                        <h3 className="font-serif text-xl md:text-2xl font-light text-escura">
+                          {corretor.nome}
+                        </h3>
+                        <span className="text-[10px] text-texto-suave/80 font-mono">
+                          {corretor.creci}
+                        </span>
+                      </div>
+
+                      <p className="font-sans text-sm text-texto-suave font-light leading-relaxed">
+                        {corretor.especialidade}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-texto/10">
+                      <a
+                        href={linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-escura hover:bg-dourado text-branco font-sans text-xs uppercase tracking-widest font-medium transition-colors duration-300"
+                      >
+                        <span>Falar com {primeiroNome}</span>
+                        <span className="ml-2">→</span>
+                      </a>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
         </div>
       </section>
 
@@ -1243,12 +1746,24 @@ export default function App() {
               target="_blank"
               rel="noreferrer"
               onClick={() => rastrearEvento("clique_whatsapp", { origem: "cta_final" })}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-xl hover:shadow-2xl cursor-pointer"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-xl hover:shadow-2xl cursor-pointer animate-breath-whatsapp"
             >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-              </svg>
+              <Calendar className="w-4 h-4 shrink-0" />
               <span>{CONFIG.ctaFinal.botaoText}</span>
+            </a>
+
+            <a
+              href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(CONFIG.infoGerais.mensagemWhatsappDuvida || "Olá! Tenho uma dúvida rápida, ainda não quero agendar uma visita.")}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => {
+                if (typeof rastrearEvento === "function") {
+                  rastrearEvento("clique_whatsapp_duvida", { origem: "cta_final" });
+                }
+              }}
+              className="font-sans text-xs text-branco/60 hover:text-branco/90 underline underline-offset-4 transition-colors duration-300 cursor-pointer pt-1"
+            >
+              Prefiro só tirar uma dúvida no WhatsApp
             </a>
 
             {/* Aviso de Agenda (Urgência Real e Honesta) */}
@@ -1353,7 +1868,7 @@ export default function App() {
                             onClick={() => setPeriodoForm(opcao)}
                             className={`py-3 text-xs tracking-wider uppercase font-bold transition-all duration-300 rounded-none cursor-pointer border text-center ${
                               isSelected
-                                ? "bg-acento text-branco border-acento"
+                                ? "bg-dourado text-branco border-dourado"
                                 : "bg-branco/5 text-branco/70 border-branco/10 hover:border-branco/30 hover:text-branco"
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
@@ -1495,24 +2010,51 @@ export default function App() {
             </div>
 
             {/* Coluna 4: Contato */}
-            <div className="lg:col-span-3 space-y-4">
-              <h4 className="font-serif text-sm text-branco font-medium tracking-wide">Contato</h4>
-              <ul className="space-y-3 font-sans text-xs text-branco/60 font-light">
-                <li className="flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-dourado flex-shrink-0 mt-0.5" />
-                  <span>{CONFIG.infoGerais.endereco}</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-dourado flex-shrink-0" />
-                  <span>{CONFIG.infoGerais.telefone}</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-dourado flex-shrink-0 fill-current" viewBox="0 0 24 24">
-                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                  </svg>
-                  <span>{CONFIG.infoGerais.email}</span>
-                </li>
-              </ul>
+            <div className="lg:col-span-3 space-y-6">
+              <div className="space-y-4">
+                <h4 className="font-serif text-sm text-branco font-medium tracking-wide">Contato</h4>
+                <ul className="space-y-3 font-sans text-xs text-branco/60 font-light">
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-dourado flex-shrink-0 mt-0.5" />
+                    <span>{CONFIG.infoGerais.endereco}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Phone className="w-3.5 h-3.5 text-dourado flex-shrink-0" />
+                    <span>{CONFIG.infoGerais.telefone}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5 text-dourado flex-shrink-0 fill-current" viewBox="0 0 24 24">
+                      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                    <span>{CONFIG.infoGerais.email}</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Mapa de Localização */}
+              <div className="space-y-2 pt-2">
+                <div className="w-full aspect-video overflow-hidden border border-branco/10 bg-escura-2 grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                  <iframe
+                    title="Localização da Imobiliária"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(CONFIG.infoGerais.endereco)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  ></iframe>
+                </div>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(CONFIG.infoGerais.endereco)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-sans text-[10px] uppercase tracking-widest text-dourado hover:text-branco transition-colors"
+                >
+                  <span>Ver no Google Maps</span>
+                  <span>→</span>
+                </a>
+              </div>
             </div>
 
           </div>
@@ -1555,7 +2097,18 @@ export default function App() {
           </div>
 
           {/* Linha Divisora */}
-          <div className="w-full h-[1px] bg-branco/10 mb-8"></div>
+          <div className="w-full h-[1px] bg-branco/10 mb-6"></div>
+
+          {/* LGPD Compliance Text */}
+          <p className="font-sans text-[10px] text-branco/40 normal-case tracking-wide mb-8 max-w-4xl leading-relaxed">
+            Seus dados são usados apenas para contato sobre os imóveis anunciados e nunca são compartilhados com terceiros.{" "}
+            <a
+              href="#" /* SUBSTITUIR PELO LINK DA POLÍTICA REAL QUANDO EXISTIR */
+              className="text-dourado hover:text-branco underline transition-colors font-medium"
+            >
+              Política de Privacidade
+            </a>
+          </p>
 
           {/* Linha Final */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans text-[10px] text-branco/40 uppercase tracking-wider">
@@ -1616,7 +2169,7 @@ export default function App() {
                     <div className="absolute inset-0 bg-gradient-to-t from-escura/40 via-transparent to-transparent"></div>
                     
                     {/* Category/Tag Label */}
-                    <span className="absolute top-4 left-4 px-3 py-1 bg-acento text-branco text-[10px] font-sans font-bold uppercase tracking-widest">
+                    <span className="absolute top-4 left-4 px-3 py-1 bg-dourado text-branco text-[10px] font-sans font-bold uppercase tracking-widest">
                       {selectedImovel.tag || selectedImovel.categoria || selectedImovel.tipo}
                     </span>
                   </div>
@@ -1629,7 +2182,7 @@ export default function App() {
                           key={idx}
                           onClick={() => setActiveImageIndex(idx)}
                           className={`relative w-20 h-14 flex-shrink-0 overflow-hidden border-2 transition-all duration-300 cursor-pointer ${
-                            activeImageIndex === idx ? "border-acento scale-95" : "border-transparent opacity-60 hover:opacity-100"
+                            activeImageIndex === idx ? "border-dourado scale-95" : "border-transparent opacity-60 hover:opacity-100"
                           }`}
                         >
                           <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
@@ -1655,7 +2208,7 @@ export default function App() {
 
                     {/* Clima phrase for extra emotion */}
                     {selectedImovel.fraseClima && (
-                      <p className="font-serif text-sm text-acento italic font-medium">
+                      <p className="font-serif text-sm text-dourado italic font-medium">
                         "{selectedImovel.fraseClima}"
                       </p>
                     )}
@@ -1668,15 +2221,15 @@ export default function App() {
                     {/* Metrics/Specifications Grid */}
                     <div className="grid grid-cols-3 gap-4 border-y border-texto/5 py-5 text-center font-sans">
                       <div className="flex flex-col items-center gap-1.5">
-                        <Bed className="w-4 h-4 text-acento" />
+                        <Bed className="w-4 h-4 text-dourado" />
                         <span className="text-xs font-medium text-escura">{selectedImovel.quartos} {CONFIG.detalhesModal.quartosLabel}</span>
                       </div>
                       <div className="flex flex-col items-center gap-1.5">
-                        <Bath className="w-4 h-4 text-acento" />
+                        <Bath className="w-4 h-4 text-dourado" />
                         <span className="text-xs font-medium text-escura">{selectedImovel.banheiros} {CONFIG.detalhesModal.banheirosLabel}</span>
                       </div>
                       <div className="flex flex-col items-center gap-1.5">
-                        <Maximize className="w-4 h-4 text-acento" />
+                        <Maximize className="w-4 h-4 text-dourado" />
                         <span className="text-xs font-medium text-escura">{selectedImovel.area} {CONFIG.detalhesModal.areaLabel}</span>
                       </div>
                     </div>
@@ -1684,7 +2237,7 @@ export default function App() {
                     {/* Features/Characteristics */}
                     {(selectedImovel.caracteristicas || (selectedImovel.tipo && [selectedImovel.tipo])) && (
                       <div className="space-y-3">
-                        <h4 className="text-[10px] uppercase tracking-[0.2em] text-acento font-bold">{CONFIG.detalhesModal.diferenciaisTitulo}</h4>
+                        <h4 className="text-[10px] uppercase tracking-[0.2em] text-dourado font-bold">{CONFIG.detalhesModal.diferenciaisTitulo}</h4>
                         <div className="flex flex-wrap gap-2">
                           {(selectedImovel.caracteristicas || ["Design Exclusivo", "Localização Premium"]).map((char: string, i: number) => (
                             <span
@@ -1704,7 +2257,7 @@ export default function App() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                       <div className="flex flex-col">
                         <span className="text-[9px] font-sans uppercase tracking-widest text-texto-suave">{CONFIG.detalhesModal.precoLabel}</span>
-                        <span className="font-serif text-2xl text-acento font-semibold lowercase tracking-wide">{selectedImovel.preco}</span>
+                        <span className="font-serif text-2xl text-dourado font-semibold lowercase tracking-wide">{selectedImovel.preco}</span>
                       </div>
 
                       <div className="flex flex-col items-center sm:items-end gap-3 w-full sm:w-auto">
@@ -1718,7 +2271,7 @@ export default function App() {
                             onClick={() => rastrearEvento("clique_whatsapp", { origem: "modal_imovel" })}
                             className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-acento hover:bg-acento-escuro text-branco text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center shadow-lg hover:shadow-xl cursor-pointer"
                           >
-                            <Phone className="w-3.5 h-3.5" />
+                            <Calendar className="w-4 h-4 shrink-0" />
                             <span>Agendar visita ao {selectedImovel.titulo}</span>
                           </a>
 
@@ -1727,7 +2280,7 @@ export default function App() {
                             onClick={() => handleCompartilhar(selectedImovel)}
                             className="w-full sm:w-auto group inline-flex items-center justify-center gap-2 px-6 py-4 bg-transparent hover:bg-texto/5 text-texto border border-texto/20 text-xs uppercase font-semibold tracking-widest transition-all duration-300 rounded-none text-center cursor-pointer"
                           >
-                            <Share2 className="w-3.5 h-3.5 text-acento" />
+                            <Share2 className="w-3.5 h-3.5 text-dourado" />
                             <span>Compartilhar</span>
                           </button>
                         </div>
@@ -1741,7 +2294,7 @@ export default function App() {
                         )}
 
                         {compartilhadoFeedback && (
-                          <span className="text-[11px] text-acento font-sans animate-pulse">{compartilhadoFeedback}</span>
+                          <span className="text-[11px] text-dourado font-sans animate-pulse">{compartilhadoFeedback}</span>
                         )}
 
                         {!showModalForm && !modalFormSubmitted && (
@@ -1769,9 +2322,9 @@ export default function App() {
                             <motion.div
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className="py-4 text-center bg-acento/5 border border-acento/10 px-4 space-y-2"
+                              className="py-4 text-center bg-dourado/5 border border-dourado/10 px-4 space-y-2"
                             >
-                              <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-acento/10 text-acento mb-1">
+                              <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-dourado/10 text-dourado mb-1">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
@@ -1797,7 +2350,7 @@ export default function App() {
                                     onChange={(e) => setNomeModalForm(e.target.value)}
                                     disabled={enviandoModalForm}
                                     placeholder={CONFIG.ctaFinal.formulario.nomePlaceholder}
-                                    className="w-full bg-branco text-escura border border-texto/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors font-sans placeholder-texto/30 disabled:opacity-50"
+                                    className="w-full bg-branco text-escura border border-texto/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-texto/30 disabled:opacity-50"
                                   />
                                 </div>
 
@@ -1812,7 +2365,7 @@ export default function App() {
                                     onChange={(e) => setWhatsappModalForm(e.target.value)}
                                     disabled={enviandoModalForm}
                                     placeholder={CONFIG.ctaFinal.formulario.whatsappPlaceholder}
-                                    className="w-full bg-branco text-escura border border-texto/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-acento transition-colors font-sans placeholder-texto/30 disabled:opacity-50"
+                                    className="w-full bg-branco text-escura border border-texto/10 p-3 text-xs tracking-wider rounded-none focus:outline-none focus:border-dourado transition-colors font-sans placeholder-texto/30 disabled:opacity-50"
                                   />
                                 </div>
                               </div>
@@ -1847,23 +2400,20 @@ export default function App() {
         )}
       </AnimatePresence>
 
-        {/* BOTÃO FLUTUANTE DE WHATSAPP (SÓ EM DESKTOP) */}
+      {/* BOTÃO FLUTUANTE DE WHATSAPP (SÓ EM DESKTOP) */}
       <a
         href={`https://wa.me/${CONFIG.infoGerais.whatsapp}?text=${encodeURIComponent(CONFIG.infoGerais.mensagemWhatsappPadrao)}`}
         target="_blank"
         rel="noreferrer"
         onClick={() => rastrearEvento("clique_whatsapp", { origem: "botao_flutuante" })}
-        className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-[#25D366] text-branco rounded-full hidden md:flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 group cursor-pointer"
+        className="fixed bottom-6 right-6 z-[99] w-14 h-14 bg-acento text-branco rounded-full hidden md:flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 hover:bg-acento-escuro group cursor-pointer"
         aria-label="Agendar Visita"
       >
         {/* Pulsing rings */}
-        <span className="absolute inset-0 rounded-full bg-[#25D366]/40 animate-ping z-0"></span>
-        <span className="absolute inset-1 rounded-full bg-[#25D366]/20 animate-pulse z-0"></span>
+        <span className="absolute inset-0 rounded-full bg-acento/40 animate-ping z-0"></span>
+        <span className="absolute inset-1 rounded-full bg-acento/20 animate-pulse z-0"></span>
         
-        {/* Inline SVG of WhatsApp */}
-        <svg className="w-7 h-7 fill-current relative z-10" viewBox="0 0 24 24">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-        </svg>
+        <Calendar className="w-6 h-6 relative z-10" />
       </a>
 
       {/* BARRA FIXA DE CONVERSÃO MOBILE */}
@@ -1877,11 +2427,9 @@ export default function App() {
           target="_blank"
           rel="noreferrer"
           onClick={() => rastrearEvento("clique_whatsapp", { origem: "barra_fixa_mobile" })}
-          className="group inline-flex items-center gap-2 px-5 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-md cursor-pointer flex-shrink-0"
+          className="group inline-flex items-center gap-2 px-5 py-3 bg-acento hover:bg-acento-escuro text-branco font-sans text-xs uppercase font-bold tracking-widest transition-all duration-300 rounded-none shadow-md cursor-pointer flex-shrink-0"
         >
-          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-          </svg>
+          <Calendar className="w-4 h-4 shrink-0" />
           <span>Agendar Visita</span>
         </a>
       </div>

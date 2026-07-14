@@ -75,3 +75,39 @@ body {
 .animate-scroll-line {
   animation: scrollLine 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
+
+/* Custom Breathing (Pulse) Animations for High-Intent Action Buttons */
+@keyframes breath-acento {
+  0%, 100% {
+    box-shadow: 0 4px 14px 0 rgba(189, 91, 52, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 20px 8px rgba(189, 91, 52, 0.45);
+  }
+}
+
+@keyframes breath-whatsapp {
+  0%, 100% {
+    box-shadow: 0 4px 14px 0 rgba(37, 211, 102, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 20px 8px rgba(37, 211, 102, 0.45);
+  }
+}
+
+.animate-breath-acento {
+  animation: breath-acento 2.8s ease-in-out infinite;
+}
+
+.animate-breath-acento:hover {
+  animation-play-state: paused;
+}
+
+.animate-breath-whatsapp {
+  animation: breath-whatsapp 2.8s ease-in-out infinite;
+}
+
+.animate-breath-whatsapp:hover {
+  animation-play-state: paused;
+}
+

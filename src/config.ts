@@ -11,6 +11,7 @@ export interface Imovel {
   local: string;
   tipo: string;
   preco: string;
+  transacao: "venda" | "aluguel";
   quartos: number;
   banheiros: number;
   area: number; // em m²
@@ -22,6 +23,7 @@ export interface Imovel {
   imagemUrl?: string;
   categoria?: string;
   caracteristicas?: string[];
+  estiloDeVida?: string[];
 }
 
 export interface Depoimento {
@@ -40,6 +42,7 @@ export interface ImobiliariaConfig {
     whatsapp: string; // Número limpo para link: '5511999999999'
     whatsappFormatado: string; // Para exibição: '(11) 99999-9999'
     mensagemWhatsappPadrao: string; // Mensagem padrão para o whatsapp
+    mensagemWhatsappDuvida?: string; // Mensagem de dúvida rápida
     botaoHeader: string; // Botão do header
     email: string;
     telefone: string;
@@ -101,6 +104,14 @@ export interface ImobiliariaConfig {
   };
   imovelDestaque: Imovel | null;
   imoveis: Imovel[];
+  estilosDeVida: Array<{
+    icone: string;
+    titulo: string;
+  }>;
+  bairrosDestaque: Array<{
+    nome: string;
+    imagem: string;
+  }>;
   colecaoSeção: {
     eyebrow: string;
     titulo: string;
@@ -161,6 +172,14 @@ export interface ImobiliariaConfig {
     creci: string;
     foto: string;
   };
+  equipe: Array<{
+    nome: string;
+    cargo: string;
+    creci: string;
+    foto: string;
+    whatsapp?: string;
+    especialidade: string;
+  }>;
   rodape: {
     textoCredito: string;
   };
@@ -174,7 +193,6 @@ export interface ImobiliariaConfig {
     areaLabel: string;
   };
 }
-
 export const CONFIG: ImobiliariaConfig = {
   infoGerais: {
     nome: "Aura Imóveis d'Alma",
@@ -183,6 +201,7 @@ export const CONFIG: ImobiliariaConfig = {
     whatsapp: "5511999999999",
     whatsappFormatado: "(11) 99999-9999",
     mensagemWhatsappPadrao: "Olá! Gostaria de agendar uma visita ou conversa com um corretor.",
+    mensagemWhatsappDuvida: "Olá! Tenho uma dúvida rápida, ainda não quero agendar uma visita.",
     botaoHeader: "Agendar Visita",
     email: "contato@auraimoveis.com.br",
     telefone: "(11) 3040-0000",
@@ -258,17 +277,18 @@ export const CONFIG: ImobiliariaConfig = {
   destaqueSeção: {
     eyebrow: "UM EXEMPLO DO QUE ESTAMOS FALANDO",
     titulo: "Imagine acordar aqui.",
-    descricaoTemplate: "Luz da manhã entrando pela varanda. Café pronto enquanto você ainda decide o que fazer no fim de semana. Um jardim que vira extensão da sala da",
-    botaoVerDestaque: "Quero agendar uma visita a este imóvel",
-    botaoVerOutros: "Ver outras possibilidades",
+    descricaoTemplate: "Luz da manhã entrando pela varanda. Café pronto enquanto você ainda decide o que fazer no fim de semana. Um jardim que vira extensão da sala de estar.",
+    botaoVerDestaque: "Ver detalhes do imóvel",
+    botaoVerOutros: "Explorar coleção completa"
   },
   imovelDestaque: {
     id: "imovel-1",
     titulo: "Casa das Palmeiras",
-    descricao: "Um refúgio modernista projetado na década de 70, com integration total à natureza e claraboias dramáticas que banham os ambientes em luz natural.",
-    local: "Jardim Europa, São Paulo",
+    descricao: "Um refúgio modernista projetado na década de 70, com integração total à natureza e claraboias dramáticas que banham os ambientes em luz natural.",
+    local: "Vila Nova",
     tipo: "Casa",
     preco: "R$ 14.800.000",
+    transacao: "venda",
     quartos: 4,
     banheiros: 5,
     area: 450,
@@ -280,19 +300,21 @@ export const CONFIG: ImobiliariaConfig = {
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80"
     ],
-    localizacao: "Jardim Europa, São Paulo",
+    localizacao: "Vila Nova",
     imagemUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
     categoria: "urbano",
-    caracteristicas: ["Piscina de raia", "Jardim tropical", "Claraboias", "Adega climatizada"]
+    caracteristicas: ["Piscina de raia", "Jardim tropical", "Claraboias", "Adega climatizada"],
+    estiloDeVida: ["Alto padrão", "Perto da natureza", "Ideal para famílias"]
   },
   imoveis: [
     {
       id: "imovel-1",
       titulo: "Casa das Palmeiras",
       descricao: "Um refúgio modernista projetado na década de 70, com integração total à natureza e claraboias dramáticas que banham os ambientes em luz natural.",
-      local: "Jardim Europa, São Paulo",
+      local: "Vila Nova",
       tipo: "Casa",
       preco: "R$ 14.800.000",
+      transacao: "venda",
       quartos: 4,
       banheiros: 5,
       area: 450,
@@ -304,18 +326,20 @@ export const CONFIG: ImobiliariaConfig = {
         "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80"
       ],
-      localizacao: "Jardim Europa, São Paulo",
+      localizacao: "Vila Nova",
       imagemUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
       categoria: "urbano",
-      caracteristicas: ["Piscina de raia", "Jardim tropical", "Claraboias", "Adega climatizada"]
+      caracteristicas: ["Piscina de raia", "Jardim tropical", "Claraboias", "Adega climatizada"],
+      estiloDeVida: ["Alto padrão", "Perto da natureza", "Ideal para famílias"]
     },
     {
       id: "imovel-2",
       titulo: "Refúgio da Mata",
       descricao: "Uma obra de vidro e madeira suspensa na copa das árvores. Perfeita para quem busca desconexão total e o abraço acolhedor da Serra Fluminense.",
-      local: "Itaipava, Rio de Janeiro",
+      local: "Zona Rural",
       tipo: "Casa de Campo",
       preco: "R$ 6.200.000",
+      transacao: "venda",
       quartos: 3,
       banheiros: 4,
       area: 380,
@@ -326,18 +350,20 @@ export const CONFIG: ImobiliariaConfig = {
         "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1200&q=80"
       ],
-      localizacao: "Itaipava, Rio de Janeiro",
+      localizacao: "Zona Rural",
       imagemUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
       categoria: "campo",
-      caracteristicas: ["Lareira de pedra", "Ofurô externo", "Deck suspenso", "Horta orgânica"]
+      caracteristicas: ["Lareira de pedra", "Ofurô externo", "Deck suspenso", "Horta orgânica"],
+      estiloDeVida: ["Perto da natureza", "Sítios e chácaras", "Alto padrão"]
     },
     {
       id: "imovel-3",
       titulo: "Cobertura Horizonte",
       descricao: "Cobertura duplex linear com vista livre e panorâmica para a praia de Ipanema. Pé-direito duplo na sala de jantar e uma piscina suspensa com borda infinita.",
-      local: "Ipanema, Rio de Janeiro",
+      local: "Centro",
       tipo: "Cobertura",
       preco: "R$ 22.000.000",
+      transacao: "venda",
       quartos: 3,
       banheiros: 5,
       area: 320,
@@ -348,18 +374,20 @@ export const CONFIG: ImobiliariaConfig = {
         "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
       ],
-      localizacao: "Ipanema, Rio de Janeiro",
+      localizacao: "Centro",
       imagemUrl: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
       categoria: "litoral",
-      caracteristicas: ["Piscina de borda infinita", "Pé-direito duplo", "Automação total", "Elevador privativo"]
+      caracteristicas: ["Piscina de borda infinita", "Pé-direito duplo", "Automação total", "Elevador privativo"],
+      estiloDeVida: ["Alto padrão", "Investimento"]
     },
     {
       id: "imovel-4",
       titulo: "Apartamento Brisa",
       descricao: "Apartamento reformado assinado por arquiteto renomado. Piso em taco de madeira nobre original e grandes janelas voltadas para as copas das árvores dos Jardins.",
-      local: "Jardins, São Paulo",
+      local: "Bonfim",
       tipo: "Apartamento",
-      preco: "R$ 4.900.000",
+      preco: "R$ 15.000 / mês",
+      transacao: "aluguel",
       quartos: 2,
       banheiros: 3,
       area: 180,
@@ -370,18 +398,20 @@ export const CONFIG: ImobiliariaConfig = {
         "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80"
       ],
-      localizacao: "Jardins, São Paulo",
+      localizacao: "Bonfim",
       imagemUrl: "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80",
       categoria: "urbano",
-      caracteristicas: ["Piso de taco original", "Janelas piso-teto", "Cozinha integrada", "Ar condicionado VRF"]
+      caracteristicas: ["Piso de taco original", "Janelas piso-teto", "Cozinha integrada", "Ar condicionado VRF"],
+      estiloDeVida: ["Centro histórico", "Investimento", "Ideal para famílias"]
     },
     {
       id: "imovel-5",
       titulo: "Vila das Águas",
       descricao: "Arquitetura baiana contemporânea com telhados de palha e estrutura em eucalipto autoclavado. A apenas 50 metros da areia, rodeada por um gramado infinito.",
-      local: "Trancoso, Bahia",
+      local: "Zona Rural",
       tipo: "Casa de Praia",
       preco: "R$ 9.500.000",
+      transacao: "venda",
       quartos: 5,
       banheiros: 6,
       area: 520,
@@ -392,18 +422,20 @@ export const CONFIG: ImobiliariaConfig = {
         "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"
       ],
-      localizacao: "Trancoso, Bahia",
+      localizacao: "Zona Rural",
       imagemUrl: "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1200&q=80",
       categoria: "litoral",
-      caracteristicas: ["Acesso privativo à praia", "Varanda gourmet", "Piscina com deck", "Bangalô de hóspedes"]
+      caracteristicas: ["Acesso privativo à praia", "Varanda gourmet", "Piscina com deck", "Bangalô de hóspedes"],
+      estiloDeVida: ["Perto da natureza", "Alto padrão"]
     },
     {
       id: "imovel-6",
       titulo: "Solar do Vale",
       descricao: "Casa rústica-chique em condomínio fechado de alto padrão. Fachada revestida em pedras naturais e vidros duplos alemães para perfeito isolamento térmico.",
-      local: "Gramado, Rio Grande do Sul",
+      local: "Retiro",
       tipo: "Casa de Campo",
-      preco: "R$ 5.400.000",
+      preco: "R$ 12.000 / mês",
+      transacao: "aluguel",
       quartos: 4,
       banheiros: 4,
       area: 410,
@@ -414,11 +446,27 @@ export const CONFIG: ImobiliariaConfig = {
         "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80"
       ],
-      localizacao: "Gramado, Rio Grande do Sul",
+      localizacao: "Retiro",
       imagemUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
       categoria: "campo",
-      caracteristicas: ["Paredes de pedra natural", "Calefação instalada", "Adega subterrânea", "Espaço de fogo de chão"]
+      caracteristicas: ["Paredes de pedra natural", "Calefação instalada", "Adega subterrânea", "Espaço de fogo de chão"],
+      estiloDeVida: ["Perto da natureza", "Sítios e chácaras", "Alto padrão", "Ideal para famílias"]
     }
+  ],
+  estilosDeVida: [
+    { icone: "🌳", titulo: "Perto da natureza" },
+    { icone: "🏛", titulo: "Centro histórico" },
+    { icone: "👨‍👩‍👧", titulo: "Ideal para famílias" },
+    { icone: "💼", titulo: "Investimento" },
+    { icone: "✨", titulo: "Alto padrão" },
+    { icone: "🚜", titulo: "Sítios e chácaras" }
+  ],
+  bairrosDestaque: [
+    { nome: "Vila Nova", imagem: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" },
+    { nome: "Centro", imagem: "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&w=800&q=80" },
+    { nome: "Zona Rural", imagem: "https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&w=800&q=80" },
+    { nome: "Bonfim", imagem: "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=800&q=80" },
+    { nome: "Retiro", imagem: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80" }
   ],
   colecaoSeção: {
     eyebrow: "SELEÇÃO ATUAL",
@@ -506,6 +554,30 @@ export const CONFIG: ImobiliariaConfig = {
     creci: "CRECI 12345-J",
     foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&h=150&q=80",
   },
+  equipe: [
+    {
+      nome: "Ana Beatriz Martins",
+      cargo: "Especialista em Alto Padrão",
+      creci: "CRECI 12345-J",
+      foto: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&h=300&q=80",
+      especialidade: "Focada em coberturas e residências de luxo nos bairros nobres.",
+    },
+    {
+      nome: "Carlos Roberto",
+      cargo: "Especialista em Imóveis Rurais",
+      creci: "CRECI 67890-F",
+      foto: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=300&h=300&q=80",
+      whatsapp: "5511977777777",
+      especialidade: "Focado em sítios, chácaras e refúgios em meio à natureza na Zona Rural.",
+    },
+    {
+      nome: "Julia Santos",
+      cargo: "Consultora de Apartamentos Boutique",
+      creci: "CRECI 54321-G",
+      foto: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&h=300&q=80",
+      especialidade: "Especialista em lofts, estúdios e apartamentos decorados no Centro e Bonfim.",
+    }
+  ],
   rodape: {
     textoCredito: "© 2026 Aura Imóveis d'Alma. Todos os direitos reservados. Design e curadoria por Aura Lab."
   },
